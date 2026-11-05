@@ -1,0 +1,1025 @@
+[
+  {
+    "id": "moong-dal-chilla",
+    "name": "Moong Dal Chilla",
+    "meal": "breakfast",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 30,
+    "servings": 4,
+    "kcal": 256,
+    "protein": 12,
+    "carbs": 32,
+    "fat": 8,
+    "fiber": 5,
+    "allergens": [],
+    "tags": [
+      "budget",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "1 cup (200 g) split yellow moong dal",
+      "1 tsp cumin seeds",
+      "1 green chilli",
+      "1/2 inch piece ginger",
+      "3/4 tsp salt",
+      "About 3/4 cup water, for grinding",
+      "1/3 cup red onion, finely chopped",
+      "1/4 cup grated carrot",
+      "1/4 cup fresh coriander, chopped",
+      "1/8 tsp ajwain (carom seeds)",
+      "1/8 tsp turmeric",
+      "Oil for the pan, about 1 tsp per chilla"
+    ],
+    "steps": [
+      "Rinse the dal 2-3 times, cover with plenty of water and soak for 3-4 hours. Drain well.",
+      "Blend the dal with cumin, chilli, ginger, salt and the water into a thick but pourable batter.",
+      "Stir in the onion, carrot, coriander, ajwain and turmeric.",
+      "Heat a cast-iron or non-stick pan on medium. Pour in a ladle of batter and spread it into a 6-7 inch round.",
+      "Drizzle oil around the edge, cook until golden, flip and cook the other side. Makes 8; serve 2 per person."
+    ],
+    "source": "https://www.cookwithmanali.com/moong-dal-chilla/",
+    "photo": "recipe_photos/moong-dal-chilla.jpg",
+    "photoCredit": "NAVYA · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Pesarattu_with_ginger_pickel.JPG"
+  },
+  {
+    "id": "vegetable-poha",
+    "name": "Vegetable Poha",
+    "meal": "breakfast",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 25,
+    "servings": 2,
+    "kcal": 450,
+    "protein": 10,
+    "carbs": 64,
+    "fat": 18,
+    "fiber": 6,
+    "allergens": [
+      "nuts"
+    ],
+    "tags": [
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1 1/2 cups thick poha (flattened rice)",
+      "1 medium onion, finely chopped",
+      "1/2 cup mixed vegetables (peas, diced carrot, capsicum)",
+      "2 green chillies, slit",
+      "1 sprig curry leaves",
+      "1 1/2 tbsp oil",
+      "3 tbsp raw peanuts",
+      "3/4 tsp mustard seeds",
+      "3/4 tsp cumin seeds",
+      "1/4 tsp turmeric",
+      "1/3 tsp salt",
+      "1/2 tsp sugar (optional)",
+      "1 tbsp lemon juice",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Rinse the poha briefly in a colander, drain and leave covered for 5 minutes to soften. Mix in salt and sugar.",
+      "Fry the peanuts in the oil until golden and crunchy; lift out and keep aside.",
+      "In the same oil crackle the mustard and cumin seeds, then add onion, curry leaves and chillies. Saute until pink.",
+      "Add the mixed vegetables, cover and cook on low for 4-5 minutes until just tender.",
+      "Stir in the turmeric and poha, cover and steam on low for 2-3 minutes. Sprinkle a little water if it looks dry.",
+      "Turn off the heat, mix in the lemon juice and top with coriander and the roasted peanuts."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/poha-recipe-kanda-batata-poha/",
+    "photo": "recipe_photos/vegetable-poha.jpg",
+    "photoCredit": "Ajay Suresh · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Poha_(49790895152).jpg"
+  },
+  {
+    "id": "masala-oats",
+    "name": "Masala Oats",
+    "meal": "breakfast",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 30,
+    "servings": 2,
+    "kcal": 325,
+    "protein": 9,
+    "carbs": 51,
+    "fat": 11,
+    "fiber": 11,
+    "allergens": [
+      "dairy",
+      "gluten"
+    ],
+    "tags": [
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1 cup rolled oats",
+      "3 1/2 cups water",
+      "1/4 cup onion, chopped",
+      "1/2 cup tomato, chopped",
+      "1/2 cup carrot, finely chopped",
+      "1/4 cup green beans, finely chopped",
+      "1/4 cup green peas",
+      "1/4 cup sweet corn",
+      "3/4 tsp ginger, finely chopped",
+      "3/4 tsp garlic, finely chopped",
+      "1 green chilli, chopped",
+      "1 1/2 tbsp ghee",
+      "1/2 tsp cumin seeds",
+      "1/8 tsp turmeric",
+      "1/2 tsp Kashmiri red chilli powder",
+      "1/2 tsp garam masala",
+      "1 tsp salt",
+      "Juice of 1 lemon",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Heat the ghee, add cumin seeds, then soften the onion and chilli. Add the ginger and garlic for a minute.",
+      "Add the tomato and cook until soft, then stir in the chilli powder, turmeric and garam masala.",
+      "Add the carrot, beans, peas and corn and stir-fry for 2 minutes.",
+      "Pour in the water, bring to a boil and simmer until the vegetables are almost tender.",
+      "Stir in the oats and salt and cook uncovered, stirring, until thick but still pourable. Add hot water if needed.",
+      "Rest for a minute, then stir in the lemon juice and garnish with coriander."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/masala-oats-recipe/",
+    "photo": "recipe_photos/masala-oats.jpg",
+    "photoCredit": "Dr. Raju Kasambe · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Masala_Oats_by_Dr._Raju_Kasambe_DSCN7840_(8).jpg"
+  },
+  {
+    "id": "egg-bhurji",
+    "name": "Egg Bhurji",
+    "meal": "breakfast",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 20,
+    "servings": 2,
+    "kcal": 296,
+    "protein": 14,
+    "carbs": 8,
+    "fat": 23,
+    "fiber": 2,
+    "allergens": [
+      "egg"
+    ],
+    "tags": [
+      "low-carb",
+      "quick",
+      "budget"
+    ],
+    "ingredients": [
+      "4 large eggs",
+      "1/4 tsp salt",
+      "1/8 tsp turmeric",
+      "2 tbsp oil",
+      "1/2 tsp cumin seeds",
+      "1/2 cup onion, finely chopped",
+      "1 green chilli, chopped",
+      "1 tsp ginger-garlic paste",
+      "1 small tomato, finely chopped",
+      "3/4 tsp garam masala",
+      "1/2 tsp red chilli powder",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Whisk the eggs with the salt and turmeric until frothy.",
+      "Heat the oil, let the cumin sizzle, then fry the onion and chilli until golden. Add the ginger-garlic paste for a minute.",
+      "Add the tomato and cook until soft and pulpy.",
+      "Pour in the eggs and stir gently over medium heat until almost set.",
+      "Sprinkle in garam masala and chilli powder and cook 1-2 minutes more. Finish with coriander; serve with roti or toast."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/egg-bhurji-andhra-egg-porutu/",
+    "photo": "recipe_photos/egg-bhurji.jpg",
+    "photoCredit": "Praveen · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Spicy_egg_bhurji_@_the_eggfactory.jpg"
+  },
+  {
+    "id": "strawberry-overnight-oats",
+    "name": "Strawberry Overnight Oats",
+    "meal": "breakfast",
+    "cuisine": "Global",
+    "veg": true,
+    "minutes": 10,
+    "servings": 1,
+    "kcal": 250,
+    "protein": 13,
+    "carbs": 44,
+    "fat": 5,
+    "fiber": 7,
+    "allergens": [
+      "dairy",
+      "gluten"
+    ],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "1/3 cup old-fashioned rolled oats",
+      "1/3 cup fat-free milk",
+      "1/4 cup nonfat plain Greek yogurt",
+      "2 tsp chia seeds",
+      "2 tsp honey",
+      "1 tsp ground cinnamon",
+      "1/4 cup chopped fresh strawberries"
+    ],
+    "steps": [
+      "Put the oats, milk, yogurt, chia seeds, honey and cinnamon into a half-pint jar with a lid.",
+      "Close the jar and shake until everything is evenly combined.",
+      "Fold in the strawberries, cover and refrigerate for at least 8 hours or overnight. Eat cold."
+    ],
+    "source": "https://medicine.wvu.edu/culinary/recipes/no-cook-overnight-oats/",
+    "photo": "recipe_photos/strawberry-overnight-oats.jpg",
+    "photoCredit": "Vegan Feast Catering · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Steel_Cut_Oats_and_Strawberries_(4788514232).jpg"
+  },
+  {
+    "id": "egg-white-omelette",
+    "name": "Veggie Egg-White Omelette",
+    "meal": "breakfast",
+    "cuisine": "Global",
+    "veg": false,
+    "minutes": 10,
+    "servings": 1,
+    "kcal": 247,
+    "protein": 27,
+    "carbs": 10,
+    "fat": 11,
+    "fiber": 2,
+    "allergens": [
+      "dairy",
+      "egg"
+    ],
+    "tags": [
+      "high-protein",
+      "low-carb",
+      "quick"
+    ],
+    "ingredients": [
+      "3/4 cup liquid egg whites (whites of 5-6 large eggs)",
+      "1 tsp olive oil",
+      "1/4 cup onion, diced",
+      "1/4 cup bell pepper, diced",
+      "1/2 cup baby spinach",
+      "2 tbsp grated cheese of your choice",
+      "2-3 fresh basil leaves (optional)",
+      "Salt and pepper, to taste"
+    ],
+    "steps": [
+      "Heat the oil in a non-stick pan over medium heat. Soften the onion and pepper, then wilt in the spinach. Season.",
+      "Pour the egg whites over the vegetables. As the edges set, lift them so the runny egg flows underneath.",
+      "When just set, scatter the cheese and basil over one half, fold the omelette over and slide onto a plate."
+    ],
+    "source": "https://www.egglandsbest.com/recipe/egg-white-omelette",
+    "photo": "recipe_photos/egg-white-omelette.jpg",
+    "photoCredit": "Armando Olivo Martín del Campo · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Omelette_Mexicano.jpg"
+  },
+  {
+    "id": "rajma-masala",
+    "name": "Rajma Masala",
+    "meal": "lunch",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 50,
+    "servings": 4,
+    "kcal": 269,
+    "protein": 12,
+    "carbs": 38,
+    "fat": 9,
+    "fiber": 10,
+    "allergens": [],
+    "tags": [
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1 cup (200 g) dried rajma (red kidney beans)",
+      "2 1/2 tbsp oil",
+      "1 small bay leaf",
+      "1/2 tsp cumin seeds",
+      "1 cup (120 g) onion, finely chopped",
+      "1 green chilli, chopped",
+      "1 1/2 tsp ginger-garlic paste",
+      "1 1/2 cups (300 g) tomatoes, pureed",
+      "3/4 tsp red chilli powder",
+      "1 tsp garam masala, divided",
+      "1 1/2 tsp coriander powder",
+      "3/4 tsp cumin powder",
+      "1/4 tsp turmeric",
+      "1 tsp salt, or to taste",
+      "1 tbsp kasuri methi (dried fenugreek)",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Soak the rajma in 4 cups of water for 8 hours or overnight, then drain and rinse.",
+      "Pressure cook with 1 1/2 cups fresh water for 4-5 whistles until fully soft. Undercooked kidney beans are unsafe.",
+      "Heat the oil, add bay leaf and cumin, then fry the onion and chilli until golden. Stir in the ginger-garlic paste.",
+      "Add the tomato puree and cook until thick, then add the spice powders (half the garam masala) for 2-3 minutes.",
+      "Add the beans with their liquid and 1/2-1 cup hot water. Simmer for 10-15 minutes until thick and creamy.",
+      "Season with salt, the rest of the garam masala and crushed kasuri methi. Garnish with coriander; serve with rice."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/rajma-recipe-rajma-masala-recipe/",
+    "photo": "recipe_photos/rajma-masala.jpg",
+    "photoCredit": "Scott Veg · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Rajma_Red_Kidney_Bean_dish_India.jpg"
+  },
+  {
+    "id": "masoor-dal",
+    "name": "Masoor Dal",
+    "meal": "lunch",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 25,
+    "servings": 2,
+    "kcal": 269,
+    "protein": 13,
+    "carbs": 36,
+    "fat": 8,
+    "fiber": 8,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1/2 cup (95 g) masoor dal (split red lentils)",
+      "2 tbsp moong dal",
+      "2 medium tomatoes, chopped",
+      "1 green chilli, slit",
+      "1 1/4 cups water",
+      "1 tbsp ghee",
+      "1 dried red chilli, broken",
+      "2 garlic cloves, chopped",
+      "1/4 tsp mustard seeds",
+      "1/2 tsp cumin seeds",
+      "1/2 tsp salt",
+      "1/4 tsp Kashmiri red chilli powder",
+      "1/4 tsp turmeric",
+      "1/8 tsp garam masala",
+      "1/2 tsp kasuri methi",
+      "2 tbsp chopped fresh coriander",
+      "1 tbsp lemon juice"
+    ],
+    "steps": [
+      "Wash both dals until the water runs clear. Add the tomatoes, green chilli and water.",
+      "Pressure cook for 1-2 whistles, or simmer in a covered pot until soft, skimming off froth. Mash to your liking.",
+      "For the tadka, heat the ghee and fry the mustard, cumin, dried chilli and garlic until the garlic is light golden.",
+      "Off the heat, add the chilli powder, turmeric and garam masala, then pour the tadka straight into the dal.",
+      "Add salt and crushed kasuri methi and simmer for 2 minutes. Finish with lemon juice and coriander."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/masoor-dal-recipe/",
+    "photo": "recipe_photos/masoor-dal.jpg",
+    "photoCredit": "Atudu · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Musur_dal.jpg"
+  },
+  {
+    "id": "boiled-egg-kachumber-salad",
+    "name": "Boiled Egg Kachumber Salad",
+    "meal": "lunch",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 30,
+    "servings": 1,
+    "kcal": 376,
+    "protein": 16,
+    "carbs": 26,
+    "fat": 26,
+    "fiber": 4,
+    "allergens": [
+      "egg"
+    ],
+    "tags": [
+      "budget"
+    ],
+    "ingredients": [
+      "2 large eggs",
+      "1 tbsp oil",
+      "1/2 tsp ground coriander",
+      "1/2 tsp garlic paste",
+      "1/2 tsp paprika",
+      "1/4 tsp ground cumin",
+      "1/2 tsp salt, divided",
+      "1 medium tomato, cubed",
+      "1 small red onion, chopped",
+      "5 small radishes, cubed",
+      "1/2 English cucumber, cubed",
+      "1 tbsp apple cider vinegar",
+      "2 tsp lime juice",
+      "1/2 tsp chaat masala",
+      "1/4 tsp chilli powder (optional)",
+      "1/4 tsp garam masala",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Hard-boil the eggs for about 10 minutes, cool them in cold water, then peel and quarter lengthwise.",
+      "Toss the tomato, onion, radish and cucumber with the vinegar, lime juice, chaat masala, chilli and half the salt.",
+      "Warm the oil in a non-stick pan over medium heat and stir in the coriander, garlic paste, paprika, cumin and remaining salt.",
+      "Add the egg quarters and turn them gently until coated in the spices. Let them cool a little.",
+      "Pile the salad on a plate, arrange the masala eggs on top and finish with garam masala and coriander."
+    ],
+    "source": "https://www.eggs.ca/recipes/masala-egg-kachumber-salad",
+    "photo": "recipe_photos/boiled-egg-kachumber-salad.jpg",
+    "photoCredit": "Keka De · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Homemade_Egg_and_Avo_Salad_-_Bangalore_-_Karnataka_-_KDF1.jpg"
+  },
+  {
+    "id": "grilled-chicken-salad",
+    "name": "Grilled Chicken Salad with Harissa Yogurt",
+    "meal": "lunch",
+    "cuisine": "Mediterranean",
+    "veg": false,
+    "minutes": 30,
+    "servings": 4,
+    "kcal": 351,
+    "protein": 42,
+    "carbs": 24,
+    "fat": 11,
+    "fiber": 6,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-protein",
+      "high-fiber"
+    ],
+    "ingredients": [
+      "600 g skinless chicken breast",
+      "1 can (390 g) chickpeas, drained and rinsed",
+      "4 tsp oil",
+      "2 garlic cloves, minced",
+      "1 telegraph (English) cucumber, thinly sliced",
+      "1 1/2 cups coleslaw mix",
+      "2 cups baby spinach",
+      "2 tbsp harissa paste",
+      "1/3 cup plain yogurt",
+      "Salt and pepper"
+    ],
+    "steps": [
+      "Pat the chickpeas dry and brown them in the oil in a hot pan for 4-5 minutes. Season, set aside and wipe the pan.",
+      "Slice each chicken breast horizontally into thin steaks and toss with the garlic, salt and pepper.",
+      "Cook the chicken in the hot pan or a griddle over medium-high heat for 3-5 minutes a side until cooked through. Rest it.",
+      "Toss the cucumber, slaw, spinach and chickpeas with the harissa and yogurt.",
+      "Chop the chicken, toss it in its resting juices and pile it on top of the salad."
+    ],
+    "source": "https://www.heartfoundation.org.nz/wellbeing/healthy-recipes/low-carb-chicken-chop-salad-with-creamy-harissa-yoghurt",
+    "photo": "recipe_photos/grilled-chicken-salad.jpg",
+    "photoCredit": "PattayaPatrol · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:DSC_7112_A_plate_of_grilled_chicken_Caesar_salad_on_a_table_set_for_dinner_with_glasses_of_red_wine_and_soft_candlelight_in_the_background.jpg"
+  },
+  {
+    "id": "black-bean-quinoa-bowl",
+    "name": "Black Bean Quinoa Bowl",
+    "meal": "lunch",
+    "cuisine": "Mexican",
+    "veg": true,
+    "minutes": 30,
+    "servings": 4,
+    "kcal": 320,
+    "protein": 14,
+    "carbs": 55,
+    "fat": 7,
+    "fiber": 12,
+    "allergens": [],
+    "tags": [
+      "low-fat",
+      "high-fiber"
+    ],
+    "ingredients": [
+      "1 cup dry quinoa",
+      "2 cups water",
+      "1 1/2 cups canned low-sodium black beans, drained and rinsed",
+      "1 1/2 cups cherry tomatoes, halved",
+      "1 cucumber, diced",
+      "1 orange bell pepper, chopped",
+      "2 cups baby spinach, chopped",
+      "1/4 cup red onion, finely chopped",
+      "1/4 cup fresh lime juice",
+      "1 tbsp olive oil",
+      "1 tsp Dijon mustard",
+      "1 garlic clove, minced",
+      "1 tbsp chopped fresh coriander",
+      "1/4 tsp salt",
+      "1/8 tsp black pepper"
+    ],
+    "steps": [
+      "Rinse the quinoa and simmer it, covered, in the water for about 15 minutes until absorbed. Fluff and cool.",
+      "Whisk the lime juice, olive oil, mustard, garlic, coriander, salt and pepper into a dressing.",
+      "Divide the quinoa, beans, tomatoes, cucumber, pepper, spinach and onion among 4 bowls or jars.",
+      "Spoon the dressing over each and toss before eating. Keeps covered in the fridge for up to 4 days."
+    ],
+    "source": "https://diabetesfoodhub.org/recipes/black-bean-quinoa-mason-jar-salad",
+    "photo": "recipe_photos/black-bean-quinoa-bowl.jpg",
+    "photoCredit": "Joey Doll · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Quinoa_salad_(29307761548).jpg"
+  },
+  {
+    "id": "mediterranean-tuna-wrap",
+    "name": "Mediterranean Tuna Wrap",
+    "meal": "lunch",
+    "cuisine": "Mediterranean",
+    "veg": false,
+    "minutes": 15,
+    "servings": 4,
+    "kcal": 370,
+    "protein": 24,
+    "carbs": 32,
+    "fat": 16,
+    "fiber": 6,
+    "allergens": [
+      "gluten",
+      "fish"
+    ],
+    "tags": [
+      "high-protein",
+      "high-fiber",
+      "quick"
+    ],
+    "ingredients": [
+      "2 cans (170 g each) chunk light tuna in water, well drained",
+      "1/4 cup red onion, finely diced",
+      "1/4 cup chopped fresh parsley",
+      "1/4 cup chopped Kalamata olives",
+      "3 tbsp olive oil",
+      "1/2 tsp grated lemon zest",
+      "2 tbsp fresh lemon juice",
+      "Salt and black pepper",
+      "6 cups mixed salad greens",
+      "4 whole-grain wraps (about 55 g each)",
+      "2 large tomatoes, sliced"
+    ],
+    "steps": [
+      "Mix the tuna, onion, parsley and olives in a bowl.",
+      "Whisk the oil, lemon zest, lemon juice, salt and pepper. Toss two-thirds with the tuna and the rest with the greens.",
+      "Spread a quarter of the tuna over each wrap and top with about 1 1/2 cups of greens and a few tomato slices.",
+      "Roll up tightly, cut in half and serve."
+    ],
+    "source": "https://www.foodnetwork.com/recipes/ellie-krieger/mediterranean-tuna-wrap-recipe-1947830",
+    "photo": "recipe_photos/mediterranean-tuna-wrap.jpg",
+    "photoCredit": "Jen Arrr · CC BY-SA 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Albacore_tuna_rice_wrap_(7000531264).jpg"
+  },
+  {
+    "id": "palak-paneer",
+    "name": "Palak Paneer",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 45,
+    "servings": 3,
+    "kcal": 350,
+    "protein": 10,
+    "carbs": 13,
+    "fat": 30,
+    "fiber": 4,
+    "allergens": [
+      "dairy",
+      "nuts"
+    ],
+    "tags": [
+      "low-carb"
+    ],
+    "ingredients": [
+      "150 g paneer, cubed",
+      "110 g spinach leaves (about 4 cups), washed",
+      "2 tbsp oil (or half butter)",
+      "2 mild green chillies",
+      "8-10 cashews",
+      "3/4 cup (90 g) onion, finely chopped",
+      "1/2 cup tomato, chopped",
+      "3/4 tsp ginger-garlic paste",
+      "1/2 tsp salt",
+      "1/2 tsp garam masala",
+      "1/2 tsp kasuri methi",
+      "1 cup water, divided",
+      "3 tbsp fresh cream"
+    ],
+    "steps": [
+      "Saute the chillies, cashews and spinach in a little of the oil until the leaves wilt. Cool, then blend with 1/4 cup water.",
+      "Heat the remaining oil and fry the onion until golden. Add the ginger-garlic paste and cook until fragrant.",
+      "Add the tomato and salt and cook until mushy, then stir in the garam masala.",
+      "Pour in 3/4 cup water, cover and simmer until the onion is completely soft.",
+      "Lower the heat, add the kasuri methi and spinach puree and simmer for 2-3 minutes until it just bubbles.",
+      "Fold in the paneer, warm through and swirl in the cream before serving."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/palak-paneer-recipe-easy-paneer-recipes-step-by-step-pics/",
+    "photo": "recipe_photos/palak-paneer.jpg",
+    "photoCredit": "DreamyFlutura11 · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Palak_Paneer_(Cottage_cheese_in_spinach_gravy).jpg"
+  },
+  {
+    "id": "paneer-tikka",
+    "name": "Paneer Tikka",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 35,
+    "servings": 3,
+    "kcal": 352,
+    "protein": 13,
+    "carbs": 14,
+    "fat": 27,
+    "fiber": 3,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "low-carb"
+    ],
+    "ingredients": [
+      "200 g paneer, cut into 9 cubes",
+      "1 large onion, cut into chunks and separated",
+      "1 red capsicum, cubed",
+      "1 green capsicum, cubed",
+      "6 tbsp thick Greek yogurt or hung curd",
+      "1 1/2 tbsp mustard oil (or any oil)",
+      "1 1/4 tsp ginger-garlic paste",
+      "1 tsp mild red chilli powder",
+      "1 tsp garam masala",
+      "1 tsp coriander powder",
+      "1 tsp chaat masala",
+      "1 tsp kasuri methi",
+      "1/4 tsp turmeric",
+      "1/2 tsp salt"
+    ],
+    "steps": [
+      "Whisk the yogurt, oil, ginger-garlic paste, spices and salt into a thick marinade.",
+      "Fold in the paneer, onion and capsicum until well coated. Cover and refrigerate for 1-2 hours.",
+      "Heat the oven to 230C (450F). Thread paneer and vegetables onto oiled skewers and lay them on a lined tray.",
+      "Bake for 10-11 minutes, brushing with the leftover marinade halfway through.",
+      "Broil on the top rack for 2-3 minutes until lightly charred. Serve hot with mint chutney and lemon."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/paneer-tikka-on-stove-top/",
+    "photo": "recipe_photos/paneer-tikka.jpg",
+    "photoCredit": "PallaviKhale · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Paneer_Tikka_Shashlik_PK012.jpg"
+  },
+  {
+    "id": "tandoori-chicken",
+    "name": "Tandoori Chicken",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 55,
+    "servings": 4,
+    "kcal": 250,
+    "protein": 30,
+    "carbs": 4,
+    "fat": 12,
+    "fiber": 1,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-protein",
+      "low-carb"
+    ],
+    "ingredients": [
+      "750 g skinless bone-in chicken legs or thighs (4 pieces)",
+      "1/2 cup thick Greek yogurt or hung curd",
+      "1 tbsp ginger-garlic paste",
+      "1 1/2 tbsp oil",
+      "1 tbsp lemon juice",
+      "1 1/2 tsp Kashmiri red chilli powder",
+      "1 1/2 tsp coriander powder",
+      "1 tsp garam masala",
+      "1/2 tsp cumin powder",
+      "1/4 tsp black pepper",
+      "1/4 tsp turmeric",
+      "1 tsp kasuri methi",
+      "1/2 tsp salt",
+      "1 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Cut deep slashes into the chicken. Mix everything except the coriander leaves into a thick marinade.",
+      "Rub the marinade well into the chicken, cover and refrigerate for at least 6 hours.",
+      "Heat the oven to 240C (470F). Set the chicken, spaced apart, on a greased rack over a foil-lined tray.",
+      "Roast for 15 minutes, baste with the leftover marinade, turn the pieces and roast 12-15 minutes more.",
+      "Broil for 3-4 minutes until charred and the thickest part reads 75C (165F). Garnish with coriander."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/tandoori-chicken-recipe/",
+    "photo": "recipe_photos/tandoori-chicken.jpg",
+    "photoCredit": "Bharat Mirchandani · CC BY-SA 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Tandoori_chicken_laccha_piyaz1_(36886283595).jpg"
+  },
+  {
+    "id": "light-bengali-chicken-curry",
+    "name": "Light Bengali Chicken Curry",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 60,
+    "servings": 4,
+    "kcal": 428,
+    "protein": 26,
+    "carbs": 69,
+    "fat": 7,
+    "fiber": 7,
+    "allergens": [],
+    "tags": [
+      "high-protein",
+      "low-fat",
+      "high-fiber",
+      "post-workout",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "500 g skinless chicken pieces, on the bone",
+      "1 small onion, pureed",
+      "6 garlic cloves, crushed",
+      "1 thumb-sized piece of ginger, crushed",
+      "1-1 1/2 tsp red chilli powder",
+      "1/2 tsp garam masala",
+      "1 tbsp vegetable oil",
+      "3 cloves, 3 cardamom pods, 2 cinnamon sticks, 3 bay leaves",
+      "2 onions, sliced",
+      "1 tsp cumin seeds",
+      "1/4 tsp turmeric",
+      "2 tsp mild paprika",
+      "200 ml hot water",
+      "2 green peppers, cut into chunks",
+      "300 g basmati rice, cooked, to serve"
+    ],
+    "steps": [
+      "Coat the chicken with the pureed onion, garlic, ginger, 1 tsp chilli powder and the garam masala. Set aside.",
+      "Heat the oil and fry the cloves, cardamom, cinnamon and bay leaves for a few seconds until fragrant.",
+      "Add the sliced onions and cumin seeds and stir-fry over high heat for about 10 minutes until golden.",
+      "Stir in the turmeric, paprika, any extra chilli and the chicken, and cook for 10 minutes, stirring often.",
+      "Add the hot water, cover and simmer on medium for 20 minutes. Cook the rice meanwhile.",
+      "Add the peppers, cover and cook 5-10 minutes until tender and the chicken is cooked through. Serve with the rice."
+    ],
+    "source": "https://www.nhs.uk/healthier-families/recipes/bengali-chicken-curry/",
+    "photo": "recipe_photos/light-bengali-chicken-curry.jpg",
+    "photoCredit": "ArghyadeepDas · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:The_Royal_Bengali_Chicken_Curry.jpg"
+  },
+  {
+    "id": "moong-dal-khichdi",
+    "name": "Moong Dal Khichdi",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 35,
+    "servings": 2,
+    "kcal": 463,
+    "protein": 16,
+    "carbs": 71,
+    "fat": 12,
+    "fiber": 6,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-fiber",
+      "budget",
+      "post-workout"
+    ],
+    "ingredients": [
+      "1/2 cup rice",
+      "1/2 cup split yellow moong dal",
+      "2 tbsp ghee, divided",
+      "3/4 tsp cumin seeds",
+      "1 bay leaf",
+      "1 tsp grated ginger",
+      "1/4 cup onion, finely chopped",
+      "1 green chilli, slit",
+      "1/2 cup tomato, finely chopped",
+      "1/4 tsp turmeric",
+      "1/3 tsp salt",
+      "4 cups water"
+    ],
+    "steps": [
+      "Rinse the rice and dal together three times and drain.",
+      "Heat 1 1/2 tbsp ghee in a pressure cooker. Add the bay leaf and cumin, then the ginger, onion and chilli; fry until golden.",
+      "Add the tomato, turmeric and salt and cook for 3-4 minutes. Stir in the rice and dal and saute for 3 minutes.",
+      "Pour in the water, stir and cook on medium for 4-5 whistles for a soft, porridge-like khichdi.",
+      "Let the pressure drop on its own. Stir, loosen with hot water if needed and top with the remaining ghee."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/dal-khichdi-recipe/",
+    "photo": "recipe_photos/moong-dal-khichdi.jpg",
+    "photoCredit": "RohitValecha · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Dal_Khichdi.jpg"
+  },
+  {
+    "id": "tofu-stir-fry",
+    "name": "Tofu Stir-Fry",
+    "meal": "dinner",
+    "cuisine": "Asian",
+    "veg": true,
+    "minutes": 35,
+    "servings": 3,
+    "kcal": 300,
+    "protein": 22,
+    "carbs": 22,
+    "fat": 16,
+    "fiber": 6,
+    "allergens": [
+      "gluten",
+      "nuts",
+      "soy",
+      "sesame"
+    ],
+    "tags": [
+      "high-protein",
+      "high-fiber"
+    ],
+    "ingredients": [
+      "450 g extra-firm tofu, drained and cut into 2.5 cm cubes",
+      "1/4 cup light sesame-ginger salad dressing",
+      "2 tsp sesame oil",
+      "2 cups broccoli florets",
+      "225 g button mushrooms, sliced",
+      "1/4 cup sliced almonds",
+      "4 spring onions, thinly sliced",
+      "1 cup low-sodium vegetable broth",
+      "1 tbsp cornstarch",
+      "1 tbsp reduced-sodium soy sauce",
+      "1 tsp Asian-style hot sauce",
+      "1 tbsp low-calorie brown sugar substitute",
+      "2 garlic cloves, minced"
+    ],
+    "steps": [
+      "Toss the tofu with the dressing and marinate for 30 minutes. Drain, keeping the marinade.",
+      "Heat the sesame oil in a wok over high heat and stir-fry the tofu for 7-8 minutes until golden.",
+      "Add the broccoli and mushrooms for 3-4 minutes, then the spring onions and almonds for 2 minutes more.",
+      "Whisk the broth, cornstarch, soy sauce, hot sauce, sweetener, garlic and saved marinade, and pour into the wok.",
+      "Bring to a boil, then simmer for 5 minutes until glossy. Eat as is or over brown rice (rice not counted)."
+    ],
+    "source": "https://diabetesfoodhub.org/recipes/tofu-stir-fry",
+    "photo": "recipe_photos/tofu-stir-fry.jpg",
+    "photoCredit": "NeoBatfreak · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Stir-fry_spinach_with_tofu_-_Golden_white_jade_and_Green_Parrot_(%E8%8F%A0%E8%8F%9C%E7%82%92%E8%B1%86%E8%85%90_-_%E9%87%91%E9%91%B2%E7%99%BD%E7%8E%89%E6%9D%BF%EF%BC%8C%E7%B4%85%E5%98%B4%E7%B6%A0%E9%B8%9A%E5%93%A5)(2).jpg"
+  },
+  {
+    "id": "kala-chana-chaat",
+    "name": "Kala Chana Chaat",
+    "meal": "snack",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 27,
+    "servings": 4,
+    "kcal": 175,
+    "protein": 8,
+    "carbs": 30,
+    "fat": 2,
+    "fiber": 7,
+    "allergens": [],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "budget",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "1 cup dried kala chana (black chickpeas)",
+      "1/3 cup tomato, deseeded and chopped",
+      "1/3 cup onion, chopped",
+      "1-2 green chillies, chopped",
+      "1-2 tbsp chopped fresh coriander",
+      "1-2 tbsp chopped fresh mint",
+      "1 tsp chaat masala",
+      "1/4 tsp black salt (kala namak)",
+      "1/4 tsp roasted cumin powder (optional)",
+      "1/4 tsp amchur (dry mango powder)",
+      "1/4 tsp red chilli powder",
+      "Salt, to taste",
+      "Juice of 1 small lemon"
+    ],
+    "steps": [
+      "Rinse the kala chana and soak in about 3 cups of water for 8 hours or overnight.",
+      "Drain, then pressure cook in fresh water for 7-8 whistles (or 25 minutes in an Instant Pot) until soft but whole.",
+      "Drain the chickpeas well and tip them into a large bowl.",
+      "Add the tomato, onion, green chilli, coriander and mint.",
+      "Sprinkle over all the spices and salt, squeeze in the lemon juice, toss well and serve."
+    ],
+    "source": "https://www.cookwithmanali.com/kala-chana-chaat/",
+    "photo": "recipe_photos/kala-chana-chaat.jpg",
+    "photoCredit": "SamunderSinghBohriya · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Kala_chana_chat(Black_pea_Chat).jpg"
+  },
+  {
+    "id": "moong-sprouts-salad",
+    "name": "Moong Sprouts Salad",
+    "meal": "snack",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 5,
+    "servings": 1,
+    "kcal": 148,
+    "protein": 6,
+    "carbs": 29,
+    "fat": 2,
+    "fiber": 6,
+    "allergens": [],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "quick",
+      "budget",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "3/4 cup moong (mung bean) sprouts",
+      "1 tbsp onion, finely chopped",
+      "1 small tomato, finely chopped",
+      "1/4 cup cucumber, finely chopped",
+      "1 small carrot, grated",
+      "1 small green chilli, deseeded and chopped",
+      "2 tbsp chopped fresh coriander",
+      "1 tbsp lemon juice",
+      "1/4 tsp chaat masala",
+      "Salt, to taste"
+    ],
+    "steps": [
+      "If the sprouts are store-bought, blanch them in boiling water for a minute, then drain and rinse.",
+      "Finely chop the onion, tomato, cucumber, chilli and coriander, and grate the carrot.",
+      "Toss everything in a bowl with the salt, chaat masala and lemon juice and eat straight away."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/sprouted-moong-salad-recipe/",
+    "photo": "recipe_photos/moong-sprouts-salad.jpg",
+    "photoCredit": "Ravi Talwar · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Sprouts_Salad.JPG"
+  },
+  {
+    "id": "greek-yogurt-blueberry-bowl",
+    "name": "Greek Yogurt Blueberry Bowl",
+    "meal": "snack",
+    "cuisine": "Global",
+    "veg": true,
+    "minutes": 2,
+    "servings": 1,
+    "kcal": 210,
+    "protein": 18,
+    "carbs": 29,
+    "fat": 4,
+    "fiber": 5,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-protein",
+      "low-fat",
+      "quick",
+      "post-workout",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "2/3 cup plain nonfat Greek yogurt",
+      "1 cup fresh blueberries",
+      "1 tbsp ground flaxseed"
+    ],
+    "steps": [
+      "Spoon the yogurt into a bowl.",
+      "Scatter the blueberries over the top.",
+      "Sprinkle with the ground flaxseed, stir through and eat straight away."
+    ],
+    "source": "https://diabetesfoodhub.org/recipes/blueberry-flax-greek-yogurt-bowl",
+    "photo": "recipe_photos/greek-yogurt-blueberry-bowl.jpg",
+    "photoCredit": "Missvain · CC BY 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Granola_and_yogurt_-_Bubbles_%2B_Brunch_2018_-_Sarah_Stierch_02_cropped.jpg"
+  },
+  {
+    "id": "peanut-butter-banana-smoothie",
+    "name": "Peanut Butter Banana Protein Smoothie",
+    "meal": "snack",
+    "cuisine": "Global",
+    "veg": true,
+    "minutes": 5,
+    "servings": 2,
+    "kcal": 444,
+    "protein": 21,
+    "carbs": 66,
+    "fat": 15,
+    "fiber": 5,
+    "allergens": [
+      "dairy",
+      "nuts"
+    ],
+    "tags": [
+      "high-protein",
+      "quick",
+      "post-workout"
+    ],
+    "ingredients": [
+      "1 cup 2% plain Greek yogurt",
+      "1/2 cup nonfat milk",
+      "2 bananas, broken into chunks",
+      "3 tbsp unsalted natural peanut butter",
+      "3 tbsp honey",
+      "1 cup ice"
+    ],
+    "steps": [
+      "Put the yogurt, milk, bananas, peanut butter, honey and ice into a blender.",
+      "Blend on high for about 45 seconds until completely smooth.",
+      "Pour into two glasses and drink right away."
+    ],
+    "source": "https://cabotcreamery.com/blogs/recipes/nutty-monkey-protein-smoothie",
+    "photo": "recipe_photos/peanut-butter-banana-smoothie.jpg",
+    "photoCredit": "Kari Sullivan · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Vegan_Banana_Lassi_(348299818).jpg"
+  }
+]

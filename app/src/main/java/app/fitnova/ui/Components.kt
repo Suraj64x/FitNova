@@ -187,12 +187,24 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
     }
 }
 
+/** Empty state: an emoji or stick-figure illustration, a title and an optional one-liner. */
 @Composable
-fun EmptyNote(title: String, body: String, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+fun EmptyNote(
+    title: String,
+    body: String? = null,
+    modifier: Modifier = Modifier,
+    emoji: String? = null,
+    figure: app.fitnova.domain.Exercise? = null,
+) {
+    Column(modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (figure != null) ExerciseIcon(figure, Modifier.size(96.dp), MaterialTheme.colorScheme.onSurfaceVariant)
+        if (emoji != null) Text(emoji, style = MaterialTheme.typography.displayMedium)
+        if (figure != null || emoji != null) Spacer(Modifier.height(8.dp))
         Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(6.dp))
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        if (body != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        }
     }
 }
 

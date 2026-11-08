@@ -50,7 +50,7 @@ fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Leaderboard", style = MaterialTheme.typography.headlineMedium)
-                    Text("Global", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Tag("🌍 Global", Tone.accent, Modifier.padding(top = 6.dp))
                 }
                 if (signedIn) {
                     Box(
@@ -66,15 +66,15 @@ fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
         item {
             when {
                 !signedIn -> Panel {
-                    EmptyNote("Sign in to compete", "Your workouts count toward the global leaderboard once you sign in.")
+                    EmptyNote("Sign in to compete", figure = app.fitnova.domain.Exercise.HIGH_KNEES)
                     PrimaryButton("Sign in", onClick = { vm.tab = Tab.PROFILE })
                 }
                 board.rows.isEmpty() && board.loading -> Panel(padding = PaddingValues(0.dp)) { repeat(5) { PlaceholderRow() } }
                 board.rows.isEmpty() && board.error != null -> Panel {
-                    EmptyNote("Couldn't load the leaderboard", board.error)
+                    EmptyNote("Couldn't load", board.error, emoji = "📡")
                     SecondaryButton("Try again", onClick = { vm.loadBoard() })
                 }
-                board.rows.isEmpty() -> Panel { EmptyNote("No scores yet", "Finish a workout to get on the board.") }
+                board.rows.isEmpty() -> Panel { EmptyNote("No scores yet", emoji = "🏁") }
                 else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val me = Graph.session.userId
                     val rest = if (board.rows.size >= 3) {
@@ -96,9 +96,8 @@ fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
         }
         if (signedIn) {
             item {
-                val updated = if (board.updatedAt > 0) "Updated ${DateUtils.getRelativeTimeSpanString(board.updatedAt)}. " else ""
                 Text(
-                    "${updated}Points are reps scored by form. Plank counts 1 point per 2 seconds. Manual workouts count half.",
+                    if (board.updatedAt > 0) "Updated ${DateUtils.getRelativeTimeSpanString(board.updatedAt)}" else "",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

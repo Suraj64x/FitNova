@@ -143,7 +143,7 @@ fun SessionScreen(live: WorkoutFlow.Live, onDone: (Workout?) -> Unit) {
 
     if (asking) {
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            Text("Allow camera access to check your form", color = Color.White, style = MaterialTheme.typography.titleSmall)
+            Text("📷 Allow camera access", color = Color.White, style = MaterialTheme.typography.titleSmall)
         }
         return
     }
@@ -301,8 +301,7 @@ private fun ManualSession(
         }
         Spacer(Modifier.weight(1f))
         Text(
-            if (live.camera) "Camera permission is off, so this is manual mode. Manual workouts earn half points."
-            else "Manual mode earns half points. Turn on the camera form check for full points.",
+            if (live.camera) "📷 Camera off · half points" else "✋ Manual · half points",
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -323,7 +322,7 @@ fun SummaryScreen(workout: Workout, onSave: () -> Unit, onDiscard: () -> Unit) {
             Glyph(R.drawable.ic_check, tint = Tone.good, size = 24)
         }
         Spacer(Modifier.height(16.dp))
-        Text("Workout complete", style = MaterialTheme.typography.headlineSmall)
+        Text("Workout complete 🎉", style = MaterialTheme.typography.headlineMedium)
         Text(workout.exercise.title, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -334,7 +333,7 @@ fun SummaryScreen(workout: Workout, onSave: () -> Unit, onDiscard: () -> Unit) {
         Spacer(Modifier.height(12.dp))
         Panel(padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
             SummaryLine("Duration", clock(workout.seconds))
-            SummaryLine("Tracking", if (workout.tracked) "Camera form check" else "Manual (half points)")
+            SummaryLine("Tracking", if (workout.tracked) "📷 Camera" else "✋ Manual · ½ pts")
         }
         Spacer(Modifier.weight(1f))
         PrimaryButton("Save workout", onClick = onSave)

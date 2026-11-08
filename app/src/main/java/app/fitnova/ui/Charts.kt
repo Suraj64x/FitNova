@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -180,5 +181,24 @@ fun Meter(fraction: Float, color: Color, modifier: Modifier = Modifier) {
     val animated by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(600), label = "meter")
     Box(modifier.height(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))) {
         Box(Modifier.fillMaxWidth(animated).fillMaxHeight().clip(CircleShape).background(color))
+    }
+}
+
+/** Concentric progress rings (outermost first), each animating independently. */
+@Composable
+fun Rings(rings: List<Pair<Float, Color>>, modifier: Modifier = Modifier, stroke: Dp = 11.dp, gap: Dp = 4.dp) {
+    val animated = rings.map { (p, _) -> animateFloatAsState(p.coerceIn(0f, 1f), tween(800), label = "rings").value }
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    Canvas(modifier) {
+        val w = stroke.toPx()
+        val step = w + gap.toPx()
+        rings.forEachIndexed { i, (_, color) ->
+            val inset = w / 2 + i * step
+            val topLeft = Offset(inset, inset)
+            val arc = Size(size.width - inset * 2, size.height - inset * 2)
+            if (arc.width <= 0f) return@forEachIndexed
+            drawArc(color.copy(alpha = 0.16f).compositeOver(track), -90f, 360f, false, topLeft, arc, style = Stroke(w))
+            if (animated[i] > 0f) drawArc(color, -90f, 360f * animated[i], false, topLeft, arc, style = Stroke(w, cap = StrokeCap.Round))
+        }
     }
 }

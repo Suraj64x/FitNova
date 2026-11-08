@@ -54,18 +54,18 @@ fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
         val name = vm.username
         if (name == null) AuthForm(vm) else Account(vm, name)
 
-        SectionTitle("Daily goal")
+        SectionTitle("🎯 Daily goal")
         val goals = listOf(30, 50, 80, 120)
         Segmented(goals.map { "$it pts" }, goals.indexOf(vm.dailyGoal).coerceAtLeast(0), { vm.changeDailyGoal(goals[it]) })
 
-        SectionTitle("Body & nutrition")
+        SectionTitle("🥗 Body & nutrition")
         Panel(onClick = { vm.editingBody = true }) {
             val b = vm.body
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(if (b == null) "Not set yet" else "${b.heightCm} cm · ${b.weightKg} kg · ${b.goal.label}", style = MaterialTheme.typography.titleSmall)
+                    Text(if (b == null) "Not set" else "${b.heightCm} cm · ${b.weightKg} kg · ${b.goal.label}", style = MaterialTheme.typography.titleSmall)
                     Text(
-                        vm.targets?.let { "${it.kcal} kcal and ${it.protein} g protein a day" } ?: "Set it up to get calorie and protein targets",
+                        vm.targets?.let { "${it.kcal} kcal and ${it.protein} g protein a day" } ?: "Tap to set up",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -74,7 +74,7 @@ fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
             }
         }
 
-        SectionTitle("Appearance")
+        SectionTitle("🎨 Appearance")
         Segmented(
             options = listOf("System", "Light", "Dark"),
             selected = ThemeMode.entries.indexOf(vm.theme),
@@ -109,7 +109,7 @@ private fun Account(vm: AppViewModel, name: String) {
         StatTile("Streak", "${stats.streak}", Modifier.weight(1f), unit = "d")
     }
 
-    SectionTitle("Sync")
+    SectionTitle("☁️ Sync")
     Panel {
         val status = when (val s = sync) {
             SyncState.Running -> "Syncing…"
@@ -119,7 +119,7 @@ private fun Account(vm: AppViewModel, name: String) {
         }
         Text(status, style = MaterialTheme.typography.bodyMedium)
         Text(
-            if (pending == 0) "Everything is backed up." else "$pending workout${if (pending == 1) "" else "s"} waiting to upload.",
+            if (pending == 0) "✓ All backed up" else "⏳ $pending waiting",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -134,7 +134,7 @@ private fun Account(vm: AppViewModel, name: String) {
         AlertDialog(
             onDismissRequest = { confirmSignOut = false },
             title = { Text("Sign out?") },
-            text = { Text("$pending workout(s) haven't uploaded yet. They'll stay on this phone and upload to whoever signs in next.") },
+            text = { Text("$pending workout(s) not uploaded yet.") },
             confirmButton = { TextButton(onClick = { confirmSignOut = false; vm.signOut() }) { Text("Sign out") } },
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
         )
@@ -150,9 +150,10 @@ private fun AuthForm(vm: AppViewModel) {
     val minLength = if (create) 12 else 1
     val ready = username.isNotBlank() && password.length >= minLength
 
-    Text(if (create) "Create account" else "Sign in", style = MaterialTheme.typography.headlineSmall)
+    ExerciseIcon(app.fitnova.domain.Exercise.LUNGE, Modifier.size(110.dp), MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(if (create) "Create account" else "Sign in", style = MaterialTheme.typography.headlineMedium)
     Text(
-        "Sync workouts and join the leaderboard. Accounts from the old Fit Nova app work here.",
+        "Old Fit Nova accounts work here.",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -174,7 +175,7 @@ private fun AuthForm(vm: AppViewModel) {
         shape = MaterialTheme.shapes.small,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-        supportingText = if (create) ({ Text("At least 12 characters. Avoid common passwords.") }) else null,
+        supportingText = if (create) ({ Text("12+ characters") }) else null,
         modifier = Modifier.fillMaxWidth(),
     )
     auth.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Tone.bad) }

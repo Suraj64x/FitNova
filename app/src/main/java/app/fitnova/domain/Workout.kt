@@ -8,7 +8,12 @@ import kotlin.math.roundToInt
 
 enum class Mode { REPS, HOLD }
 
-enum class Category(val label: String) { UPPER("Upper body"), LOWER("Lower body"), CORE("Core"), CARDIO("Cardio") }
+enum class Category(val label: String, val emoji: String) {
+    UPPER("Upper", "💪"),
+    LOWER("Lower", "🦵"),
+    CORE("Core", "🧘"),
+    CARDIO("Cardio", "🏃"),
+}
 
 /** Which posture rules the camera coach applies. [NONE] = counted by hand (no reliable camera signal). */
 enum class Rule { PUSH, KNEE_PUSH, DIP, SQUAT, LUNGE, CURL, PRESS, RAISE, JACK, BRIDGE, SITUP, LEG_RAISE, KNEE_DRIVE, PLANK, WALL_SIT, NONE }
@@ -42,7 +47,7 @@ enum class Exercise(
     CALF_RAISE("calf_raise", "Calf raises", Category.LOWER, Rule.NONE, 20, "Calves", ""),
 
     PLANK("plank", "Plank", Category.CORE, Rule.PLANK, 45, "Core · Shoulders", SIDE_FLOOR),
-    SIDE_PLANK("side_plank", "Side plank", Category.CORE, Rule.PLANK, 30, "Obliques · Core", "Face the camera, whole body in frame."),
+    SIDE_PLANK("side_plank", "Side plank", Category.CORE, Rule.PLANK, 30, "Obliques · Core", FRONT_BODY),
     SITUP("situp", "Sit-ups", Category.CORE, Rule.SITUP, 15, "Abs · Hip flexors", SIDE_FLOOR),
     CRUNCH("crunch", "Crunches", Category.CORE, Rule.NONE, 20, "Upper abs", ""),
     LEG_RAISE("leg_raise", "Leg raises", Category.CORE, Rule.LEG_RAISE, 12, "Lower abs", SIDE_FLOOR),
@@ -57,16 +62,48 @@ enum class Exercise(
     val trackable get() = rule != Rule.NONE
     val unit get() = if (mode == Mode.HOLD) "sec" else "reps"
 
+    /** Three short form cues, shown as chips before a workout. */
+    val cues: List<String>
+        get() = when (this) {
+            PUSHUP -> listOf("Body straight", "Chest to floor", "Elbows 45°")
+            KNEE_PUSHUP -> listOf("Hips in line", "Chest to floor", "Soft knees")
+            WIDE_PUSHUP -> listOf("Hands wide", "Body straight", "Slow down")
+            DIAMOND_PUSHUP -> listOf("Hands together", "Elbows close", "Body straight")
+            DIP -> listOf("Shoulders down", "Elbows 90°", "Hips close")
+            CURL -> listOf("Elbows still", "Full squeeze", "Slow lower")
+            HAMMER_CURL -> listOf("Thumbs up", "Elbows still", "Slow lower")
+            PRESS -> listOf("Core tight", "Press overhead", "No arching")
+            LATERAL_RAISE -> listOf("Lead with elbows", "Stop at shoulders", "Slow lower")
+            SQUAT -> listOf("Chest up", "Hips back", "Knees out")
+            SUMO_SQUAT -> listOf("Wide stance", "Toes out", "Chest up")
+            JUMP_SQUAT -> listOf("Full squat", "Drive arms", "Land soft")
+            LUNGE -> listOf("Knees 90°", "Torso upright", "Knee over ankle")
+            REVERSE_LUNGE -> listOf("Step back", "Knees 90°", "Torso upright")
+            GLUTE_BRIDGE -> listOf("Heels down", "Squeeze glutes", "Ribs down")
+            WALL_SIT -> listOf("Back flat", "Thighs level", "Breathe")
+            CALF_RAISE -> listOf("Full rise", "Pause on top", "Slow lower")
+            PLANK -> listOf("Straight line", "Brace core", "Breathe")
+            SIDE_PLANK -> listOf("Hips up", "Stack feet", "Brace core")
+            SITUP -> listOf("Feet down", "Roll up", "Control down")
+            CRUNCH -> listOf("Chin tucked", "Ribs to hips", "Back down")
+            LEG_RAISE -> listOf("Legs straight", "Back flat", "Slow lower")
+            MOUNTAIN_CLIMBER -> listOf("Hips level", "Knees to chest", "Quick feet")
+            JACK -> listOf("Arms overhead", "Feet wide", "Land soft")
+            HIGH_KNEES -> listOf("Knees to hips", "Quick feet", "Pump arms")
+            BURPEE -> listOf("Chest down", "Jump up", "Land soft")
+            JUMP_ROPE -> listOf("Small jumps", "Wrists turn", "Stay light")
+        }
+
     companion object {
         fun of(id: String) = entries.firstOrNull { it.id == id }
     }
 }
 
-private const val SIDE_FLOOR = "Phone on the floor, side-on, whole body in frame."
-private const val SIDE_BODY = "Side-on to the camera, whole body in frame."
-private const val SIDE_UPPER = "Side-on to the camera, hips to head in frame."
-private const val FRONT_UPPER = "Face the camera, hips to head in frame."
-private const val FRONT_BODY = "Face the camera, whole body in frame."
+private const val SIDE_FLOOR = "Side view · phone on floor"
+private const val SIDE_BODY = "Side view · full body"
+private const val SIDE_UPPER = "Side view · hips to head"
+private const val FRONT_UPPER = "Front view · hips to head"
+private const val FRONT_BODY = "Front view · full body"
 
 /**
  * Leaderboard points: reps scored by form, or 1 point per 2 seconds for holds (holds store reps = 0).
@@ -160,3 +197,6 @@ fun stats(all: List<Workout>, today: LocalDate = LocalDate.now(), zone: ZoneId =
         totalPoints = all.sumOf { it.points },
     )
 }
+
+/** A bundled photo under assets/ with its licence credit and source page. */
+data class Photo(val path: String, val credit: String?, val page: String?)

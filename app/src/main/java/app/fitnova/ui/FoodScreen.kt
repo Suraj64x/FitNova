@@ -62,6 +62,8 @@ import app.fitnova.domain.Targets
 import app.fitnova.domain.intake
 
 private val MealTypes = listOf("breakfast", "lunch", "dinner", "snack")
+private val MealEmoji = mapOf("breakfast" to "🍳", "lunch" to "🍛", "dinner" to "🍲", "snack" to "🥗")
+private val WaterBlue = Color(0xFF38B2E8)
 private val VegGreen = Color(0xFF1E9E55)
 private val NonVegRed = Color(0xFFC6402F)
 
@@ -83,29 +85,22 @@ fun FoodScreen(vm: AppViewModel, padding: PaddingValues) {
     ) {
         item {
             Text("Nutrition", style = MaterialTheme.typography.headlineMedium)
-            Text("Fuel your training. Log meals and hit your protein.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
             if (targets == null) {
                 Panel {
-                    Text("Set your daily targets", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Tell us your height, weight and goal. We'll work out calories and protein for you.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    PrimaryButton("Set targets", onClick = { vm.editingBody = true })
+                    EmptyNote("Daily targets", "Calories & protein, made for you", emoji = "🎯")
+                    PrimaryButton("Set up", onClick = { vm.editingBody = true })
                 }
             } else {
                 TargetsCard(targets, meals, onEdit = { vm.editingBody = true })
             }
         }
-        item { SectionTitle("Today's meals", action = "Add food", onAction = { adding = true }) }
+        item { WaterCard(vm.water, onSet = { vm.addWater(it - vm.water) }) }
+        item { SectionTitle("🍽️ Meals", action = "+ Add", onAction = { adding = true }) }
         item {
             if (meals.isEmpty()) {
-                Panel { EmptyNote("Nothing logged yet", "Pick a recipe below or add food yourself.") }
+                Panel { EmptyNote("Nothing logged", emoji = "🥣") }
             } else {
                 val photos = vm.recipes.associate { it.id to it.photo }
                 Panel(padding = PaddingValues(0.dp)) {
@@ -116,25 +111,41 @@ fun FoodScreen(vm: AppViewModel, padding: PaddingValues) {
                 }
             }
         }
-        item { SectionTitle("Recipes") }
+        val featured = vm.recipes.filter { it.photo != null }.sortedByDescending { it.protein }.take(8)
+        if (featured.isNotEmpty()) {
+            item { SectionTitle("💪 Top protein") }
+            item {
+                val px = with(LocalDensity.current) { 240.dp.roundToPx() }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(featured, key = { it.id }) { r ->
+                        PhotoCard(
+                            r.photo!!, r.name, "${r.protein} g protein · ${r.kcal} kcal", px,
+                            onClick = { vm.recipe = r },
+                            modifier = Modifier.size(width = 240.dp, height = 160.dp),
+                        )
+                    }
+                }
+            }
+        }
+        item { SectionTitle("📖 Recipes") }
         item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 item { Chip("All", mealType == null, { mealType = null }) }
-                items(MealTypes) { t -> Chip(t.replaceFirstChar { it.uppercase() }, mealType == t, { mealType = t }) }
+                items(MealTypes) { t -> Chip("${MealEmoji[t]} ${t.replaceFirstChar { it.uppercase() }}", mealType == t, { mealType = t }) }
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Chip("Veg only", vegOnly, { vegOnly = !vegOnly })
-                Chip("High protein", highProtein, { highProtein = !highProtein })
+                Chip("🌱 Veg", vegOnly, { vegOnly = !vegOnly })
+                Chip("💪 Protein", highProtein, { highProtein = !highProtein })
             }
         }
         if (recipes.isEmpty()) {
-            item { Panel { EmptyNote("No recipes match", "Try removing a filter.") } }
+            item { Panel { EmptyNote("No matches", emoji = "🔍") } }
         }
         items(recipes, key = { it.id }) { r -> RecipeCard(r) { vm.recipe = r } }
         item {
             Text(
-                "Nutrition values are estimates per serving. Check labels, ingredients and allergens for your own food.",
+                "Values are estimates.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -275,7 +286,7 @@ fun RecipeSheet(r: Recipe, onLog: () -> Unit, onDismiss: () -> Unit) {
                 AssetPhoto(r.photo, heroPx, Modifier.fillMaxWidth().height(210.dp).clip(MaterialTheme.shapes.large), r.name)
                 r.photoCredit?.let { credit ->
                     Text(
-                        "Photo: $credit",
+                        "📷 $credit",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -352,7 +363,7 @@ fun RecipeSheet(r: Recipe, onLog: () -> Unit, onDismiss: () -> Unit) {
             if (r.source.startsWith("http")) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Based on ${Uri.parse(r.source).host?.removePrefix("www.") ?: "source"}",
+                    "🔗 ${Uri.parse(r.source).host?.removePrefix("www.") ?: "Source"}",
                     style = MaterialTheme.typography.labelLarge,
                     color = Tone.accent,
                     modifier = Modifier
@@ -401,7 +412,7 @@ fun BodySheet(current: Body?, onSave: (Body) -> Unit, onDismiss: () -> Unit) {
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("Your body & goal", style = MaterialTheme.typography.headlineSmall)
-            Text("Used only on this phone to estimate daily calories and protein.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Stays on this phone.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Segmented(Sex.entries.map { it.label }, Sex.entries.indexOf(sex), { sex = Sex.entries[it] })
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 NumberField("Age", age, { age = it }, "years")
@@ -465,4 +476,29 @@ private fun AddFoodDialog(onAdd: (String, Int, Int, Int, Int) -> Unit, onDismiss
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/** Eight glasses: tap one to set the count (tap the last filled one to undo it). */
+@Composable
+private fun WaterCard(glasses: Int, onSet: (Int) -> Unit) {
+    Panel(padding = PaddingValues(horizontal = 18.dp, vertical = 14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("💧 Water", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text("$glasses / 8", style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"), color = WaterBlue)
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (i in 1..8) {
+                val filled = i <= glasses
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .height(34.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(if (filled) WaterBlue else MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onSet(if (i == glasses) i - 1 else i) },
+                )
+            }
+        }
+    }
 }

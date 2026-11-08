@@ -11,12 +11,14 @@ import app.fitnova.data.ApiException
 import app.fitnova.data.Rank
 import app.fitnova.data.SyncJob
 import app.fitnova.data.SyncState
+import app.fitnova.data.loadExercisePhotos
 import app.fitnova.data.loadRecipes
 import app.fitnova.domain.Activity
 import app.fitnova.domain.Body
 import app.fitnova.domain.Exercise
 import app.fitnova.domain.Goal
 import app.fitnova.domain.Meal
+import app.fitnova.domain.Photo
 import app.fitnova.domain.Recipe
 import app.fitnova.domain.Sex
 import app.fitnova.domain.Workout
@@ -79,6 +81,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val targets get() = body?.let(::targets)
     var dailyGoal by mutableIntStateOf(Graph.prefs.getInt("daily_goal", 50))
         private set
+    var exercisePhotos by mutableStateOf<Map<String, Photo>>(emptyMap())
+        private set
+
+    /** Glasses of water today (goal 8), kept per day in prefs. */
+    var water by mutableIntStateOf(Graph.prefs.getInt(waterKey(), 0))
+        private set
 
     var username by mutableStateOf(Graph.session.username)
         private set
@@ -102,12 +110,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             Graph.store.load()
             Graph.meals.load()
             recipes = loadRecipes(getApplication())
+            exercisePhotos = loadExercisePhotos(getApplication())
         }
     }
 
     /** Called on every app resume: refresh today's food log and sync only when needed. */
     fun onResume() {
         viewModelScope.launch { Graph.meals.load() }
+        water = Graph.prefs.getInt(waterKey(), 0)
         val last = (sync.value as? SyncState.Done)?.at ?: 0L
         if (Graph.store.pending().isNotEmpty() || System.currentTimeMillis() - last > 2 * 60_000) syncNow()
     }
@@ -141,6 +151,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             if (!Graph.sync.run()) SyncJob.schedule(getApplication())
         }
     }
+
+    fun addWater(delta: Int) {
+        water = (water + delta).coerceIn(0, 20)
+        Graph.prefs.edit().putInt(waterKey(), water).apply()
+    }
+
+    private fun waterKey() = "water_${LocalDate.now()}"
 
     fun changeDailyGoal(points: Int) {
         dailyGoal = points

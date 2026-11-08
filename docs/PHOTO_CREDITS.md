@@ -28,3 +28,17 @@ Nothing else was changed.
 | Moong Sprouts Salad | Ravi Talwar | CC BY-SA 4.0 | [Sprouts Salad.JPG](<https://commons.wikimedia.org/wiki/File:Sprouts_Salad.JPG>) |
 | Greek Yogurt Blueberry Bowl | Missvain | CC BY 4.0 | [Granola and yogurt - Bubbles + Brunch 2018 - Sarah Stierch 02 cropped.jpg](<https://commons.wikimedia.org/wiki/File:Granola_and_yogurt_-_Bubbles_%2B_Brunch_2018_-_Sarah_Stierch_02_cropped.jpg>) |
 | Peanut Butter Banana Protein Smoothie | Kari Sullivan | CC BY 2.0 | [Vegan Banana Lassi (348299818).jpg](<https://commons.wikimedia.org/wiki/File:Vegan_Banana_Lassi_(348299818).jpg>) |
+| Idli with Sambar | VeenaNair | CC BY-SA 4.0 | [Idli sambar and coconut chutney.jpg](<https://commons.wikimedia.org/wiki/File:Idli_sambar_and_coconut_chutney.jpg>) |
+| Vegetable Rava Upma | Priya1Iyer | CC BY-SA 4.0 | [Vegetable Upma.JPG](<https://commons.wikimedia.org/wiki/File:Vegetable_Upma.JPG>) |
+| Protein Oat Pancakes | Diana Jurca | CC BY-SA 4.0 | [Pancakes with strawberries.jpg](<https://commons.wikimedia.org/wiki/File:Pancakes_with_strawberries.jpg>) |
+| Chole (Chickpea Curry) | Johan Bichel Lindegaard | CC BY 2.0 | [Chana masala (5727362126).jpg](<https://commons.wikimedia.org/wiki/File:Chana_masala_(5727362126).jpg>) |
+| Soya Chunk Curry | Keerthinellikkalaya | CC BY-SA 4.0 | [Soya chunks takkali curry.jpg](<https://commons.wikimedia.org/wiki/File:Soya_chunks_takkali_curry.jpg>) |
+| Vegetable Brown Rice Pulao | Devika | CC BY-SA 2.0 | [Brown rice pulao (8461087702).jpg](<https://commons.wikimedia.org/wiki/File:Brown_rice_pulao_(8461087702).jpg>) |
+| Chicken Burrito Bowl | Missvain | CC BY 4.0 | [Burrito Bowl - La Casa Restaurant - Sarah Stierch - 2021-09-29.jpg](<https://commons.wikimedia.org/wiki/File:Burrito_Bowl_-_La_Casa_Restaurant_-_Sarah_Stierch_-_2021-09-29.jpg>) |
+| Egg Curry | Mdsmds0 | CC BY-SA 4.0 | [Egg Curry (Anda Curry).JPG](<https://commons.wikimedia.org/wiki/File:Egg_Curry_(Anda_Curry).JPG>) |
+| Chicken Tikka | Pankaj40sahu | CC BY-SA 4.0 | [Chicken Tikka in oven.jpg](<https://commons.wikimedia.org/wiki/File:Chicken_Tikka_in_oven.jpg>) |
+| Light Fish Curry | Kalakki at ml.wikipedia | CC BY-SA 2.5 | [Meen curry 2 (cropped).JPG](<https://commons.wikimedia.org/wiki/File:Meen_curry_2_(cropped).JPG>) |
+| Red Lentil and Vegetable Soup | Andy Li | CC0 | [Homemade Lentil Soup - Lavash 2025-02-10.jpg](<https://commons.wikimedia.org/wiki/File:Homemade_Lentil_Soup_-_Lavash_2025-02-10.jpg>) |
+| Namkeen Sattu Drink | Magadhkingdom | CC BY-SA 4.0 | [Sattu Ghol.jpg](<https://commons.wikimedia.org/wiki/File:Sattu_Ghol.jpg>) |
+| Cucumber Raita | Zeel Patel | CC BY-SA 4.0 | [Cucumber Raita.JPG](<https://commons.wikimedia.org/wiki/File:Cucumber_Raita.JPG>) |
+| Hummus Veggie Snack Plate | Jennifer | CC BY 2.0 | [Vegetables and Hummus (7271118362).jpg](<https://commons.wikimedia.org/wiki/File:Vegetables_and_Hummus_(7271118362).jpg>) |

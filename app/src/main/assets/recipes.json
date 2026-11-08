@@ -1021,5 +1021,662 @@
     "photo": "recipe_photos/peanut-butter-banana-smoothie.jpg",
     "photoCredit": "Kari Sullivan · CC BY 2.0 · Wikimedia Commons",
     "photoPage": "https://commons.wikimedia.org/wiki/File:Vegan_Banana_Lassi_(348299818).jpg"
+  },
+  {
+    "id": "idli-sambar",
+    "name": "Idli with Sambar",
+    "meal": "breakfast",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 40,
+    "servings": 4,
+    "kcal": 407,
+    "protein": 15,
+    "carbs": 77,
+    "fat": 5,
+    "fiber": 8,
+    "allergens": [],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1 cup (200 g) idli rice or parboiled rice",
+      "1/3 cup (65 g) whole skinned urad dal",
+      "1/4 tsp methi (fenugreek) seeds",
+      "1 tsp salt, divided",
+      "1/2 cup (100 g) toor dal",
+      "1 cup mixed vegetables (carrot, green beans, pumpkin), diced",
+      "10-12 shallots or 1 medium onion, chopped",
+      "1 large tomato, chopped",
+      "1 tbsp tamarind, soaked in 1/2 cup hot water",
+      "1 1/2 tbsp sambar powder",
+      "1/8 tsp turmeric",
+      "1 tbsp oil",
+      "1/2 tsp each mustard and cumin seeds",
+      "1 dried red chilli and 1 sprig curry leaves",
+      "A pinch of hing (asafoetida)",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Soak the rice, and the urad dal with the methi, separately for 5-6 hours. Grind each smooth, mix with 3/4 tsp salt and ferment overnight.",
+      "Pour the batter into greased idli moulds and steam for 10-12 minutes, until a toothpick comes out clean. Makes about 12.",
+      "Pressure cook the toor dal with 1 1/2 cups water until very soft, then mash it well.",
+      "Heat the oil and crackle the mustard, cumin, red chilli, curry leaves and hing. Saute the shallots, vegetables and tomato for 3 minutes.",
+      "Add the sambar powder, turmeric, remaining salt and 2 cups water and simmer until tender. Stir in the strained tamarind water and the dal.",
+      "Boil for 3-4 minutes and add the coriander. Serve 3 idlis with about 1 cup of sambar per person."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/idli-sambar-recipe-tiffin-sambar/",
+    "photo": "recipe_photos/idli-sambar.jpg",
+    "photoCredit": "VeenaNair · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Idli_sambar_and_coconut_chutney.jpg"
+  },
+  {
+    "id": "vegetable-rava-upma",
+    "name": "Vegetable Rava Upma",
+    "meal": "breakfast",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 25,
+    "servings": 3,
+    "kcal": 345,
+    "protein": 11,
+    "carbs": 53,
+    "fat": 10,
+    "fiber": 5,
+    "allergens": [
+      "gluten",
+      "nuts"
+    ],
+    "tags": [
+      "budget"
+    ],
+    "ingredients": [
+      "1 cup (170 g) fine rava (semolina / sooji)",
+      "1 tbsp + 1 tsp oil",
+      "2 tbsp raw peanuts",
+      "1/2 tsp mustard seeds",
+      "1 tsp urad dal",
+      "1 1/2 tsp chana dal",
+      "1 sprig curry leaves",
+      "1/4 cup onion, chopped",
+      "1-2 green chillies, slit",
+      "1/2 tsp grated ginger",
+      "1 cup mixed vegetables (carrot, beans, green peas), finely chopped",
+      "2 3/4 cups water",
+      "3/4 tsp salt",
+      "1 tbsp lemon juice",
+      "1 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Dry roast the rava in a wide pan on medium heat for 4-5 minutes, until fragrant but still pale. Tip it onto a plate.",
+      "Heat the oil and fry the peanuts until crisp. Add the mustard, urad dal and chana dal and fry until the dals turn golden.",
+      "Add the curry leaves, chillies, ginger and onion and cook until soft. Add the vegetables, cover and cook for 4-5 minutes.",
+      "Pour in the water with the salt and bring to a rolling boil.",
+      "Lower the heat and rain in the rava, stirring all the time so no lumps form. Cover and cook on low for 3 minutes.",
+      "Rest covered for 5 minutes, then fluff it up, stir in the lemon juice and coriander and serve warm."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/upma-recipe-how-to-make-upma/",
+    "photo": "recipe_photos/vegetable-rava-upma.jpg",
+    "photoCredit": "Priya1Iyer · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Vegetable_Upma.JPG"
+  },
+  {
+    "id": "protein-oat-pancakes",
+    "name": "Protein Oat Pancakes",
+    "meal": "breakfast",
+    "cuisine": "Global",
+    "veg": false,
+    "minutes": 15,
+    "servings": 1,
+    "kcal": 343,
+    "protein": 26,
+    "carbs": 27,
+    "fat": 15,
+    "fiber": 4,
+    "allergens": [
+      "dairy",
+      "egg",
+      "gluten"
+    ],
+    "tags": [
+      "high-protein",
+      "quick"
+    ],
+    "ingredients": [
+      "1/4 cup 2% cottage cheese (soft curds, not paneer)",
+      "1/4 cup rolled oats",
+      "1 large egg",
+      "1 tsp oil",
+      "1/2 cup sliced strawberries",
+      "1/2 cup 2% plain Greek yogurt"
+    ],
+    "steps": [
+      "Blend the cottage cheese, oats and egg until you have a smooth, thick batter.",
+      "Warm the oil in a non-stick pan or griddle over medium heat.",
+      "Pour in about 1/4 cup of batter per pancake. Cook until golden underneath, flip and cook until set in the middle.",
+      "Stack the pancakes and top with the Greek yogurt and strawberries."
+    ],
+    "source": "https://pressbooks.openeducationalberta.ca/proteincookbookforcancer/chapter/high-protein-pancakes/",
+    "photo": "recipe_photos/protein-oat-pancakes.jpg",
+    "photoCredit": "Diana Jurca · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Pancakes_with_strawberries.jpg"
+  },
+  {
+    "id": "chole",
+    "name": "Chole (Chickpea Curry)",
+    "meal": "lunch",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 50,
+    "servings": 4,
+    "kcal": 298,
+    "protein": 12,
+    "carbs": 42,
+    "fat": 10,
+    "fiber": 9,
+    "allergens": [],
+    "tags": [
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1 cup (200 g) dried chickpeas (kabuli chana)",
+      "1 1/2 cups water, for cooking",
+      "2 tbsp oil",
+      "1 small bay leaf",
+      "1 1/2 cups (240 g) onion, finely chopped",
+      "1 green chilli, slit",
+      "3/4 tbsp ginger-garlic paste",
+      "1 1/2 cups (270 g) tomatoes, finely chopped",
+      "3/4 tsp salt",
+      "1/4 tsp turmeric",
+      "1 1/2 tsp Kashmiri red chilli powder",
+      "2 tsp coriander powder",
+      "1/2 tsp cumin powder",
+      "1 tsp garam masala",
+      "1/4 tsp amchur (dry mango powder)",
+      "1 tsp kasuri methi",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Soak the chickpeas in plenty of water for at least 8 hours. Drain and pressure cook with 1 1/2 cups fresh water until completely soft.",
+      "Heat the oil with the bay leaf and fry the onion and chilli until light golden. Stir in the ginger-garlic paste for a minute.",
+      "Add the tomatoes and salt and cook until soft and jammy, then add the turmeric, chilli powder, coriander, cumin and garam masala.",
+      "Add the chickpeas, their cooking liquid and 1/2 cup hot water. Simmer for 15 minutes until thick, mashing a few chickpeas.",
+      "Finish with the amchur, crushed kasuri methi and coriander. Serve with rice or roti."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/chana-masala/",
+    "photo": "recipe_photos/chole.jpg",
+    "photoCredit": "Johan Bichel Lindegaard · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Chana_masala_(5727362126).jpg"
+  },
+  {
+    "id": "soya-chunk-curry",
+    "name": "Soya Chunk Curry",
+    "meal": "lunch",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 25,
+    "servings": 3,
+    "kcal": 244,
+    "protein": 20,
+    "carbs": 20,
+    "fat": 8,
+    "fiber": 8,
+    "allergens": [
+      "soy"
+    ],
+    "tags": [
+      "high-protein",
+      "high-fiber",
+      "budget"
+    ],
+    "ingredients": [
+      "1 1/4 cups (about 100 g) soya chunks",
+      "1 1/2 cups (2 large) tomatoes, chopped",
+      "1/4 cup grated fresh coconut",
+      "1 1/2 tbsp oil",
+      "1/2 tsp cumin seeds",
+      "1 sprig curry leaves or 1 bay leaf",
+      "1 cup onion, finely chopped",
+      "1 green chilli, slit",
+      "1 1/2 tsp ginger-garlic paste",
+      "3/4 tsp red chilli powder",
+      "3/4 tsp garam masala",
+      "3/4 tsp coriander powder",
+      "1/2 tsp salt",
+      "1 1/4 cups hot water",
+      "2 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Soak the soya chunks in hot water for 10 minutes until soft. Squeeze them dry, rinse twice and squeeze again.",
+      "Blend the tomatoes and coconut to a smooth puree.",
+      "Heat the oil, add the cumin and curry leaves, then fry the onion and chilli until golden. Add the ginger-garlic paste for a minute.",
+      "Pour in the puree and cook until thick, then stir in the chilli powder, garam masala, coriander powder and salt.",
+      "Add the soya chunks and hot water, bring to a boil and simmer on low for 6-8 minutes. Garnish with coriander."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/soya-chunks-curry-meal-maker-curry/",
+    "photo": "recipe_photos/soya-chunk-curry.jpg",
+    "photoCredit": "Keerthinellikkalaya · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Soya_chunks_takkali_curry.jpg"
+  },
+  {
+    "id": "brown-rice-veg-pulao",
+    "name": "Vegetable Brown Rice Pulao",
+    "meal": "lunch",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 40,
+    "servings": 3,
+    "kcal": 340,
+    "protein": 8,
+    "carbs": 62,
+    "fat": 7,
+    "fiber": 7,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "budget",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "1 cup (190 g) brown rice",
+      "2 tsp oil",
+      "1 tsp ghee",
+      "1/2 tsp cumin seeds",
+      "1 bay leaf, 2 cloves, 2 green cardamoms and 1 small cinnamon stick",
+      "1/2 cup onion, sliced",
+      "1 tsp ginger-garlic paste",
+      "1 tsp green chilli paste",
+      "3/4 cup green beans, chopped",
+      "3/4 cup carrot, chopped",
+      "3/4 cup green peas",
+      "1 tsp biryani masala or garam masala",
+      "1/2 tsp salt",
+      "2 1/4 cups hot water",
+      "2 tbsp chopped fresh coriander or mint"
+    ],
+    "steps": [
+      "Rinse the brown rice and soak it for at least 1 hour, then drain.",
+      "Heat the oil and ghee in a pressure cooker. Add the cumin and whole spices and let them sizzle for 30 seconds.",
+      "Add the onion, ginger-garlic paste and chilli paste and saute for 2 minutes until the onion softens.",
+      "Stir in the beans, carrot, peas, rice, biryani masala and salt and saute for a minute.",
+      "Pour in the hot water and pressure cook for 4 whistles. Let the pressure drop on its own, fluff and top with coriander."
+    ],
+    "source": "https://www.tarladalal.com/brown-rice-vegetable-pulao-low-salt-recipe-42031r",
+    "photo": "recipe_photos/brown-rice-veg-pulao.jpg",
+    "photoCredit": "Devika · CC BY-SA 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Brown_rice_pulao_(8461087702).jpg"
+  },
+  {
+    "id": "chicken-burrito-bowl",
+    "name": "Chicken Burrito Bowl",
+    "meal": "lunch",
+    "cuisine": "Mexican",
+    "veg": false,
+    "minutes": 25,
+    "servings": 2,
+    "kcal": 450,
+    "protein": 33,
+    "carbs": 52,
+    "fat": 13,
+    "fiber": 11,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-protein",
+      "high-fiber",
+      "post-workout"
+    ],
+    "ingredients": [
+      "225 g boneless, skinless chicken breast",
+      "1/4 tsp each chilli powder, ground cumin, garlic powder and onion powder",
+      "2 tsp oil",
+      "2 cups baby spinach",
+      "1 cup cooked brown rice",
+      "1/2 cup canned black beans or boiled rajma, drained and rinsed",
+      "1/2 cup sweet corn kernels",
+      "1/2 cup cherry tomatoes, halved",
+      "1/4 cup red onion, chopped",
+      "1/2 avocado, sliced",
+      "1/4 tsp salt and 1/4 tsp black pepper",
+      "2 tbsp fat-free sour cream or low-fat hung curd",
+      "2 tbsp salsa",
+      "Lime wedges, to serve"
+    ],
+    "steps": [
+      "Rub the chicken all over with the chilli powder, cumin, garlic powder and onion powder.",
+      "Cook the chicken in the oil over medium-high heat for 5-6 minutes a side until it reaches 74C (165F). Rest it, then slice.",
+      "Divide the spinach, rice, beans, corn, tomatoes, onion and avocado between two bowls and season with salt and pepper.",
+      "Top with the sliced chicken, sour cream and salsa and serve with lime wedges."
+    ],
+    "source": "https://www.diabetes.ca/nutrition-and-recipes/recipes/chicken-burrito-bowls-for-two",
+    "photo": "recipe_photos/chicken-burrito-bowl.jpg",
+    "photoCredit": "Missvain · CC BY 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Burrito_Bowl_-_La_Casa_Restaurant_-_Sarah_Stierch_-_2021-09-29.jpg"
+  },
+  {
+    "id": "egg-curry",
+    "name": "Egg Curry",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 40,
+    "servings": 3,
+    "kcal": 248,
+    "protein": 14,
+    "carbs": 11,
+    "fat": 17,
+    "fiber": 3,
+    "allergens": [
+      "egg"
+    ],
+    "tags": [
+      "low-carb",
+      "budget"
+    ],
+    "ingredients": [
+      "6 large eggs",
+      "1 1/2 tbsp oil, divided",
+      "1 small bay leaf",
+      "1 1/4 cups (200 g) onion, finely chopped",
+      "1 green chilli, slit",
+      "1 tsp ginger-garlic paste",
+      "1 cup (180 g) tomatoes, pureed",
+      "1/8 tsp turmeric",
+      "3/4 tsp red chilli powder",
+      "3/4 tsp coriander powder",
+      "3/4 tsp garam masala",
+      "1/2 tsp salt",
+      "1 cup water",
+      "1/4 tsp kasuri methi",
+      "1 tbsp chopped fresh coriander"
+    ],
+    "steps": [
+      "Hard-boil the eggs for 10 minutes, cool them in cold water and peel. Prick each one a few times with a fork.",
+      "Fry the eggs in 1 tsp of the oil, turning them, until lightly golden and blistered. Set aside.",
+      "Heat the rest of the oil with the bay leaf and fry the onion and chilli until golden. Add the ginger-garlic paste for a minute.",
+      "Add the tomato puree and cook until thick, then the spice powders and salt. Fry until the oil starts to separate.",
+      "Add the water and simmer until the gravy thickens. Add the eggs and kasuri methi, simmer 3 minutes and garnish with coriander."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/punjabi-egg-curry-anda-curry-dhaba-style/",
+    "photo": "recipe_photos/egg-curry.jpg",
+    "photoCredit": "Mdsmds0 · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Egg_Curry_(Anda_Curry).JPG"
+  },
+  {
+    "id": "chicken-tikka",
+    "name": "Chicken Tikka",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 35,
+    "servings": 4,
+    "kcal": 242,
+    "protein": 28,
+    "carbs": 8,
+    "fat": 10,
+    "fiber": 2,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "high-protein",
+      "low-carb"
+    ],
+    "ingredients": [
+      "450-500 g boneless chicken, cut into 4 cm pieces",
+      "1/2 cup thick Greek yogurt or hung curd",
+      "1 1/2 tbsp ginger-garlic paste",
+      "1 tbsp oil (mustard oil if you have it)",
+      "1 tbsp lemon juice",
+      "1 tsp Kashmiri red chilli powder",
+      "2 tsp coriander powder",
+      "3/4 tsp roasted cumin powder",
+      "1 tsp garam masala",
+      "1 tsp chaat masala",
+      "1/4 tsp turmeric",
+      "1/2 tsp black pepper",
+      "1 tbsp kasuri methi",
+      "1 tsp salt",
+      "1 medium onion and 1 1/2 cups bell peppers, cut into chunks",
+      "1 tbsp butter, melted, for brushing"
+    ],
+    "steps": [
+      "Pat the chicken dry. Mix in the spice powders, kasuri methi, salt and lemon juice and leave for 15 minutes.",
+      "Add the ginger-garlic paste, oil and yogurt, coat well and refrigerate for at least 8 hours (20 minutes if short of time).",
+      "Heat the oven to 240C (460F). Thread the chicken, onion and peppers onto skewers and set them on a rack over a lined tray.",
+      "Bake for 9 minutes, turn the skewers and bake 9-10 minutes more until the chicken is cooked through.",
+      "Grill for 2 minutes for charred edges, brush with the butter and serve with mint chutney and onion rings."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/chicken-tikka-in-oven/",
+    "photo": "recipe_photos/chicken-tikka.jpg",
+    "photoCredit": "Pankaj40sahu · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Chicken_Tikka_in_oven.jpg"
+  },
+  {
+    "id": "light-fish-curry",
+    "name": "Light Fish Curry",
+    "meal": "dinner",
+    "cuisine": "Indian",
+    "veg": false,
+    "minutes": 40,
+    "servings": 3,
+    "kcal": 278,
+    "protein": 35,
+    "carbs": 10,
+    "fat": 11,
+    "fiber": 3,
+    "allergens": [
+      "fish"
+    ],
+    "tags": [
+      "high-protein",
+      "low-carb"
+    ],
+    "ingredients": [
+      "500 g firm white fish (rohu, basa or tilapia), cut into pieces",
+      "1 tbsp ginger-garlic paste, divided",
+      "1/4 tsp turmeric, divided",
+      "1 1/4 tsp Kashmiri red chilli powder, divided",
+      "3/4 tsp salt, divided",
+      "1 1/2 tbsp oil, divided",
+      "1/2 tsp cumin seeds",
+      "1 cup onion, sliced",
+      "2 medium tomatoes, chopped",
+      "2 tbsp grated fresh coconut",
+      "1/2 tsp fennel seeds",
+      "1 sprig curry leaves",
+      "1-2 green chillies, slit",
+      "1 tsp garam masala or curry powder",
+      "1 1/4 cups water"
+    ],
+    "steps": [
+      "Coat the fish with half the ginger-garlic paste, turmeric, chilli powder and salt. Set aside for 15 minutes.",
+      "Sear the fish in 1/2 tbsp oil for a minute on each side and lift out. It finishes cooking in the curry.",
+      "In 1/2 tbsp oil fry the cumin and onion until golden. Add the rest of the ginger-garlic paste, the tomatoes and salt; cook until soft.",
+      "Stir in the coconut, fennel and remaining chilli and turmeric for a minute. Cool slightly and blend smooth with a splash of water.",
+      "Heat the last of the oil, add the curry leaves, chillies, paste and garam masala and fry 2 minutes. Add the water and simmer.",
+      "Once the gravy thickens, slide in the fish, cover and cook on medium for 5-6 minutes until it flakes easily."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/fish-curry-recipe/",
+    "photo": "recipe_photos/light-fish-curry.jpg",
+    "photoCredit": "Kalakki at ml.wikipedia · CC BY-SA 2.5 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Meen_curry_2_(cropped).JPG"
+  },
+  {
+    "id": "red-lentil-soup",
+    "name": "Red Lentil and Vegetable Soup",
+    "meal": "dinner",
+    "cuisine": "Global",
+    "veg": true,
+    "minutes": 45,
+    "servings": 4,
+    "kcal": 207,
+    "protein": 12,
+    "carbs": 38,
+    "fat": 2,
+    "fiber": 7,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "budget",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "3/4 cup (150 g) red lentils (masoor dal), rinsed",
+      "1 large onion, chopped",
+      "3 carrots, chopped",
+      "1 red capsicum, deseeded and chopped",
+      "1 litre low-salt vegetable stock",
+      "1/2 tsp ground cumin",
+      "1/4 tsp ground ginger (optional)",
+      "Black pepper, to taste",
+      "4 tbsp low-fat plain yogurt",
+      "2 tsp chopped chives or coriander"
+    ],
+    "steps": [
+      "Put the onion, carrots, capsicum, lentils, cumin and ginger in a large pan with the stock.",
+      "Bring to the boil, then simmer half-covered for 25-30 minutes until the lentils and vegetables are soft.",
+      "Blend until smooth with a stick blender, adding a little hot water if it is too thick. Season with black pepper.",
+      "Ladle into bowls, swirl a tablespoon of yogurt into each and scatter over the chives."
+    ],
+    "source": "https://www.nhs.uk/healthier-families/recipes/vegetable-and-lentil-soup/",
+    "photo": "recipe_photos/red-lentil-soup.jpg",
+    "photoCredit": "Andy Li · CC0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Homemade_Lentil_Soup_-_Lavash_2025-02-10.jpg"
+  },
+  {
+    "id": "sattu-drink",
+    "name": "Namkeen Sattu Drink",
+    "meal": "snack",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 5,
+    "servings": 2,
+    "kcal": 208,
+    "protein": 12,
+    "carbs": 32,
+    "fat": 4,
+    "fiber": 6,
+    "allergens": [],
+    "tags": [
+      "low-fat",
+      "high-fiber",
+      "quick",
+      "budget",
+      "pre-workout"
+    ],
+    "ingredients": [
+      "1 cup (100 g) chana sattu (roasted gram flour)",
+      "2 cups chilled water",
+      "Juice of 1 lemon",
+      "1/4 cup onion, finely chopped (optional)",
+      "1 green chilli, finely chopped",
+      "6-7 mint leaves, chopped",
+      "1/2 tsp roasted cumin powder",
+      "1/2 tsp black salt (kala namak)",
+      "A pinch of salt, to taste"
+    ],
+    "steps": [
+      "Whisk the sattu with a little of the water into a smooth, lump-free paste.",
+      "Gradually whisk in the rest of the chilled water.",
+      "Stir in the lemon juice, cumin, black salt, salt, chilli, onion and mint.",
+      "Pour into two glasses and drink straight away, stirring as you go because the sattu settles."
+    ],
+    "source": "https://nishamadhulika.com/en/1759-sattu_sharbat.html",
+    "photo": "recipe_photos/sattu-drink.jpg",
+    "photoCredit": "Magadhkingdom · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Sattu_Ghol.jpg"
+  },
+  {
+    "id": "cucumber-raita",
+    "name": "Cucumber Raita",
+    "meal": "snack",
+    "cuisine": "Indian",
+    "veg": true,
+    "minutes": 10,
+    "servings": 2,
+    "kcal": 141,
+    "protein": 8,
+    "carbs": 14,
+    "fat": 7,
+    "fiber": 1,
+    "allergens": [
+      "dairy"
+    ],
+    "tags": [
+      "quick",
+      "budget"
+    ],
+    "ingredients": [
+      "1 1/2 cups thick plain yogurt (dahi), chilled",
+      "1 cup cucumber, finely chopped",
+      "1 green chilli, deseeded and chopped (optional)",
+      "2 tbsp chopped fresh coriander",
+      "4-5 mint leaves, chopped",
+      "1/4 tsp salt",
+      "1/2 tsp roasted cumin powder",
+      "1/4 tsp black pepper",
+      "1/2 tsp chaat masala (optional)"
+    ],
+    "steps": [
+      "Chop the cucumber, peeling it if the skin is bitter, and finely chop the herbs and chilli.",
+      "Whisk the cold yogurt in a bowl until smooth.",
+      "Fold in the cucumber, chilli, coriander, mint and salt.",
+      "Sprinkle with the roasted cumin, pepper and chaat masala and serve chilled."
+    ],
+    "source": "https://www.indianhealthyrecipes.com/cucumber-raita-recipe/",
+    "photo": "recipe_photos/cucumber-raita.jpg",
+    "photoCredit": "Zeel Patel · CC BY-SA 4.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Cucumber_Raita.JPG"
+  },
+  {
+    "id": "hummus-veggie-plate",
+    "name": "Hummus Veggie Snack Plate",
+    "meal": "snack",
+    "cuisine": "Mediterranean",
+    "veg": true,
+    "minutes": 10,
+    "servings": 4,
+    "kcal": 150,
+    "protein": 7,
+    "carbs": 19,
+    "fat": 6,
+    "fiber": 7,
+    "allergens": [
+      "sesame"
+    ],
+    "tags": [
+      "high-fiber",
+      "quick"
+    ],
+    "ingredients": [
+      "1 cup hummus, store-bought or homemade",
+      "1 cup cherry tomatoes",
+      "1 cucumber, cut into sticks",
+      "1 red capsicum, cut into strips",
+      "2 carrots, cut into sticks",
+      "1 cup broccoli florets or sugar snap peas"
+    ],
+    "steps": [
+      "Wash the vegetables and cut them into sticks or bite-size pieces.",
+      "Spoon the hummus into a small bowl in the centre of a large plate.",
+      "Arrange the vegetables around it, alternating colours. Allow 1/4 cup hummus and about 1 1/2 cups of vegetables per person.",
+      "For homemade hummus, blend 1 1/2 cups cooked chickpeas with 2 tbsp tahini, lemon juice, 1 garlic clove and a splash of water."
+    ],
+    "source": "https://diabetesfoodhub.org/recipes/holiday-veggie-platter-hummus-quick-recipe",
+    "photo": "recipe_photos/hummus-veggie-plate.jpg",
+    "photoCredit": "Jennifer · CC BY 2.0 · Wikimedia Commons",
+    "photoPage": "https://commons.wikimedia.org/wiki/File:Vegetables_and_Hummus_(7271118362).jpg"
   }
 ]

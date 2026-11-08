@@ -3,6 +3,7 @@ package app.fitnova.data
 import android.content.ContentValues
 import android.content.Context
 import app.fitnova.domain.Meal
+import app.fitnova.domain.Photo
 import app.fitnova.domain.Recipe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
 import java.time.LocalDate
 
 /** Today's food log, kept on the phone. */
@@ -88,4 +90,15 @@ suspend fun loadRecipes(context: Context): List<Recipe> = withContext(Dispatcher
             )
         }
     }.getOrDefault(emptyList())
+}
+
+/** Exercise photos (assets/exercise_photos.json), keyed by exercise id. Empty if not bundled. */
+suspend fun loadExercisePhotos(context: Context): Map<String, Photo> = withContext(Dispatchers.IO) {
+    runCatching {
+        val root = JSONObject(context.assets.open("exercise_photos.json").bufferedReader().use { it.readText() })
+        root.keys().asSequence().associateWith { id ->
+            val o = root.getJSONObject(id)
+            Photo(o.getString("photo"), o.optString("credit").ifBlank { null }, o.optString("page").ifBlank { null })
+        }
+    }.getOrDefault(emptyMap())
 }

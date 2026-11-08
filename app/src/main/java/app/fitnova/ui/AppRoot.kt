@@ -80,7 +80,7 @@ fun AppRoot(vm: AppViewModel) {
     }
 
     // Pop-ups live here so any tab can open them.
-    vm.setup?.let { ex -> SetupSheet(ex, onStart = { target, camera -> vm.start(ex, target, camera) }, onDismiss = { vm.setup = null }) }
+    vm.setup?.let { ex -> SetupSheet(ex, vm.exercisePhotos[ex.id], onStart = { target, camera -> vm.start(ex, target, camera) }, onDismiss = { vm.setup = null }) }
     vm.recipe?.let { r -> RecipeSheet(r, onLog = { vm.logRecipe(r) }, onDismiss = { vm.recipe = null }) }
     if (vm.editingBody) BodySheet(vm.body, onSave = vm::saveBody, onDismiss = { vm.editingBody = false })
 }

@@ -1,0 +1,137 @@
+{
+  "pushup": {
+    "photo": "exercise_photos/pushup.jpg",
+    "credit": "United States Air Force · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Airman_executing_a_push-up_as_part_of_the_United_States_Air_Force_Fitness_Test.jpg"
+  },
+  "knee_pushup": {
+    "photo": "exercise_photos/knee_pushup.jpg",
+    "credit": "PTPioneer (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Girl_doing_push-ups.jpg"
+  },
+  "wide_pushup": {
+    "photo": "exercise_photos/wide_pushup.jpg",
+    "credit": "U.S. Army Reserve photo by Spc. Jet Cortez · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:U_S_Army_Soldier_performs_Hand_Release_Push-ups_for_ACFT_(7926119).jpg"
+  },
+  "diamond_pushup": {
+    "photo": "exercise_photos/diamond_pushup.jpg",
+    "credit": "Erick76470 · CC BY-SA 4.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Diamondpushups1.jpg"
+  },
+  "dip": {
+    "photo": "exercise_photos/dip.jpg",
+    "credit": "PTPioneer (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Girl_doing_dips_Exercise.jpg"
+  },
+  "curl": {
+    "photo": "exercise_photos/curl.jpg",
+    "credit": "PTPioneer (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Girl_exercising_doing_dumbbell_curls.jpg"
+  },
+  "hammer_curl": {
+    "photo": "exercise_photos/hammer_curl.jpg",
+    "credit": "Shixart1985 · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Woman_standing_in_front_of_a_dumbbell_rack_doing_bicep_curls.jpg"
+  },
+  "press": {
+    "photo": "exercise_photos/press.jpg",
+    "credit": "PTPioneer (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Girl_exercising_doing_dumbbell_military_press.jpg"
+  },
+  "lateral_raise": {
+    "photo": "exercise_photos/lateral_raise.jpg",
+    "credit": "ThoroughlyReviewed · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Fitness_model_shoulder_exercise_weight_training_(32438477700).jpg"
+  },
+  "squat": {
+    "photo": "exercise_photos/squat.jpg",
+    "credit": "Lance Cpl. Christian Salazar · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:1st_Lt._Nsikakabasi_Ndem_barbell_squats.jpg"
+  },
+  "sumo_squat": {
+    "photo": "exercise_photos/sumo_squat.jpg",
+    "credit": "Tyler Read (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Kettle_bell_squats.jpg"
+  },
+  "jump_squat": {
+    "photo": "exercise_photos/jump_squat.jpg",
+    "credit": "U.S. Army photo by Sgt. Nolan Thermos · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:207th_Military_Intelligence_Brigade_(Theater)_conducts_historical_World_War_II_Army_Ground_Forces_physical_fitness_test_(9780739).jpg"
+  },
+  "lunge": {
+    "photo": "exercise_photos/lunge.jpg",
+    "credit": "U.S. Air Force photo by Senior Airman Myles Stepp · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Airman_performing_lunge.jpg"
+  },
+  "reverse_lunge": {
+    "photo": "exercise_photos/reverse_lunge.jpg",
+    "credit": "PTPioneer (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Girl_doing_lunges.jpg"
+  },
+  "glute_bridge": {
+    "photo": "exercise_photos/glute_bridge.jpg",
+    "credit": "Klewis425 · CC BY-SA 3.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Single_Leg_Bridge.jpg"
+  },
+  "wall_sit": {
+    "photo": "exercise_photos/wall_sit.jpg",
+    "credit": "U.S. Marine Corps photo by Lance Cpl. Phuchung Nguyen · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Marine_Corps_officer_candidate_participate_in_physical_training.jpg"
+  },
+  "calf_raise": {
+    "photo": "exercise_photos/calf_raise.jpg",
+    "credit": "Modifyphysio · CC BY-SA 4.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Bilateral_heel_raise.jpg"
+  },
+  "plank": {
+    "photo": "exercise_photos/plank.jpg",
+    "credit": "Jaykayfit · CC BY-SA 3.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Plank.jpg"
+  },
+  "side_plank": {
+    "photo": "exercise_photos/side_plank.jpg",
+    "credit": "Tyler Read (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Girl_exercising_side_plank.jpg"
+  },
+  "situp": {
+    "photo": "exercise_photos/situp.jpg",
+    "credit": "PTPioneer (ptpioneer.com) · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Personal_training_sit_ups.jpg"
+  },
+  "crunch": {
+    "photo": "exercise_photos/crunch.jpg",
+    "credit": "PhotoAtelier · CC BY 2.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Lauren_doing_sit-ups.jpg"
+  },
+  "leg_raise": {
+    "photo": "exercise_photos/leg_raise.jpg",
+    "credit": "Mahdi Mousavi · CC BY-SA 4.0 · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Zirshekam3.jpg"
+  },
+  "mountain_climber": {
+    "photo": "exercise_photos/mountain_climber.jpg",
+    "credit": "US Air Force · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Airmen_perform_%22mountain_climbers%22.jpg"
+  },
+  "jack": {
+    "photo": "exercise_photos/jack.jpg",
+    "credit": "R.J. Oriez · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:U.S._Airmen_with_the_90th_Security_Forces_Group_do_jumping_jacks_before_a_two-mile_pride_run_March_29,_2013,_at_F.E._Warren_Air_Force_Base,_Wyo_130329-F-JW079-027.jpg"
+  },
+  "high_knees": {
+    "photo": "exercise_photos/high_knees.jpg",
+    "credit": "Staff Sgt. Orly Tyrell · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Post_Pregnancy_Pt_Class_DVIDS301829.jpg"
+  },
+  "burpee": {
+    "photo": "exercise_photos/burpee.jpg",
+    "credit": "Marine Corps photo by Sgt. Ryan Young · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Airborne_Burpee.jpg"
+  },
+  "jump_rope": {
+    "photo": "exercise_photos/jump_rope.jpg",
+    "credit": "Master Sgt. Jeffrey Allen · Public domain · Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:MPOTY_2014_U.S._Air_Force_wounded_warrior_jumps_rope.jpg"
+  }
+}

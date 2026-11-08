@@ -8,6 +8,17 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -57,5 +68,27 @@ fun AssetPhoto(path: String, targetPx: Int, modifier: Modifier = Modifier, conte
         bitmap?.let {
             Image(it, contentDescription, Modifier.matchParentSize().alpha(alpha), contentScale = ContentScale.Crop)
         }
+    }
+}
+
+/** Large photo card with the title on a soft bottom scrim, the layout top fitness apps use for featured content. */
+@Composable
+fun PhotoCard(
+    path: String,
+    title: String,
+    subtitle: String?,
+    targetPx: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    badge: @Composable BoxScope.() -> Unit = {},
+) {
+    Box(modifier.clip(MaterialTheme.shapes.large).clickable(onClick = onClick)) {
+        AssetPhoto(path, targetPx, Modifier.matchParentSize(), title)
+        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.4f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.7f))))
+        Column(Modifier.align(Alignment.BottomStart).padding(14.dp)) {
+            Text(title, color = Color.White, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (subtitle != null) Text(subtitle, color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelMedium)
+        }
+        badge()
     }
 }

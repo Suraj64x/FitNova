@@ -241,9 +241,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         flow = null
     }
 
-    fun syncNow() {
+    /** [manual] = the user tapped sync, so report the outcome. */
+    fun syncNow(manual: Boolean = false) {
         viewModelScope.launch {
             if (!Graph.sync.run()) SyncJob.schedule(getApplication())
+            if (manual) {
+                when (val s = sync.value) {
+                    is SyncState.Done -> _messages.emit("☁️ All synced")
+                    is SyncState.Failed -> _messages.emit("⚠️ ${s.message}")
+                    else -> Unit
+                }
+            }
         }
     }
 

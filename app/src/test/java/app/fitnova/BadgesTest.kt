@@ -74,3 +74,16 @@ class BadgesTest {
         assertTrue("owl" in e)
     }
 }
+
+class LevelTest {
+    @Test fun levelsGrowQuadratically() {
+        val l1 = app.fitnova.domain.level(0)
+        assertEquals(1, l1.number)
+        assertEquals(100, l1.span)
+        val l2 = app.fitnova.domain.level(150)
+        assertEquals(2, l2.number)
+        assertEquals(50, l2.into)
+        assertEquals(200, l2.span)
+        assertEquals("Pro", app.fitnova.domain.level(1000).title)
+    }
+}

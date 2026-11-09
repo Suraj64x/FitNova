@@ -25,6 +25,7 @@ import app.fitnova.GroupsState
 import app.fitnova.Scope
 import app.fitnova.data.Group
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +59,7 @@ import app.fitnova.Tab
 import app.fitnova.data.Rank
 
 private val Medals = listOf(Color(0xFFD4A72C), Color(0xFF9AA3AD), Color(0xFFB87333))
+private val MedalEmoji = listOf("🥇", "🥈", "🥉")
 
 @Composable
 fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
@@ -152,6 +154,7 @@ private fun Board(board: BoardState, onRetry: () -> Unit) {
         }
         board.rows.isEmpty() -> Panel { EmptyNote("No scores yet", emoji = "🏁") }
         else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            MyRank(board.rows, me)
             val rest = if (board.rows.size >= 3) {
                 Podium(board.rows.take(3), me)
                 board.rows.drop(3)
@@ -340,19 +343,21 @@ private fun RankRow(r: Rank, me: Boolean) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(32.dp)) {
-            Text("${r.rank}", style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
+        Box(Modifier.width(34.dp)) {
+            Text(
+                MedalEmoji.getOrNull(r.rank - 1) ?: "${r.rank}",
+                style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        if (r.rank in 1..3) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(Medals[r.rank - 1]))
-            Spacer(Modifier.width(10.dp))
-        }
+        Avatar(r.name, if (me) Tone.accent else MaterialTheme.colorScheme.onSurfaceVariant, 36)
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                if (me) "${r.name} (you)" else r.name,
+                if (me) "${r.name} · you" else r.name,
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = if (me) FontWeight.SemiBold else FontWeight.Medium),
             )
-            Text("${r.workouts} workouts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("🏋️ ${r.workouts}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text("${r.points}", style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold))
         Text(" pts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -367,10 +372,8 @@ private fun Podium(top: List<Rank>, me: String?) {
             val r = top[i]
             val medal = Medals[i]
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    Modifier.size(if (i == 0) 56.dp else 48.dp).clip(CircleShape).background(medal.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center,
-                ) { Text(r.name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge, color = medal) }
+                Text(if (i == 0) "👑" else " ", style = MaterialTheme.typography.titleLarge)
+                Avatar(r.name, medal, if (i == 0) 60 else 50, ring = r.userId == me)
                 Spacer(Modifier.height(6.dp))
                 Text(
                     if (r.userId == me) "You" else r.name,
@@ -388,7 +391,7 @@ private fun Podium(top: List<Rank>, me: String?) {
                         .background(medal.copy(alpha = 0.16f)),
                     contentAlignment = Alignment.TopCenter,
                 ) {
-                    Text("${r.rank}", style = MaterialTheme.typography.headlineSmall, color = medal, modifier = Modifier.padding(top = 10.dp))
+                    Text(MedalEmoji[i], style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
@@ -405,5 +408,54 @@ private fun PlaceholderRow() {
         Box(Modifier.weight(1f).height(12.dp).clip(MaterialTheme.shapes.extraSmall).background(c))
         Spacer(Modifier.width(40.dp))
         Box(Modifier.size(width = 36.dp, height = 12.dp).clip(MaterialTheme.shapes.extraSmall).background(c))
+    }
+}
+
+/** Initial in a tinted circle; [ring] outlines it (used for "you"). */
+@Composable
+private fun Avatar(name: String, tone: Color, size: Int, ring: Boolean = false) {
+    Box(
+        Modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(tone.copy(alpha = 0.16f))
+            .then(if (ring) Modifier.border(2.dp, Tone.accent, CircleShape) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) { Text(name.take(1).uppercase(), style = if (size >= 48) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleSmall, color = tone) }
+}
+
+/** Where you stand: your rank, points, and how far the next place is. */
+@Composable
+private fun MyRank(rows: List<Rank>, me: String?) {
+    val mine = rows.firstOrNull { it.userId == me }
+    Panel(padding = PaddingValues(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(52.dp).clip(MaterialTheme.shapes.medium).background(Tone.accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(if (mine == null) "–" else "#${mine.rank}", style = MaterialTheme.typography.titleLarge, color = Tone.accent)
+            }
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Text("Your rank", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (mine == null) {
+                    Text("Log a workout to join", style = MaterialTheme.typography.titleSmall)
+                } else {
+                    val ahead = rows.lastOrNull { it.points > mine.points }
+                    Text(
+                        when {
+                            mine.rank == 1 -> "🏆 Top of the board"
+                            ahead != null -> "⬆️ ${ahead.points - mine.points} pts to #${ahead.rank}"
+                            else -> "Keep going"
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            }
+            if (mine != null) {
+                Text("${mine.points}", style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"))
+                Text(" pts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }

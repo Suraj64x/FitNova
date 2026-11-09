@@ -4,6 +4,11 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
+import app.fitnova.domain.level
+import app.fitnova.domain.Stats
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,103 +52,157 @@ import app.fitnova.data.SyncState
 
 @Composable
 fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
+    val stats by vm.stats.collectAsStateWithLifecycle()
+    val badges by vm.badges.collectAsStateWithLifecycle()
+    val workouts by vm.workouts.collectAsStateWithLifecycle()
+    val pending = workouts.count { !it.synced }
+    var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    val name = vm.username
+
     Column(
         Modifier
             .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding() + 16.dp, bottom = padding.calculateBottomPadding() + 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        val name = vm.username
-        if (name == null) AuthForm(vm) else Account(vm, name)
+        Text("Profile", style = MaterialTheme.typography.headlineMedium)
+        ProfileCard(name ?: "Guest", stats)
+        if (name == null) {
+            Panel { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { AuthForm(vm) } }
+        } else {
+            SyncCard(vm, pending)
+        }
 
-        val badges by vm.badges.collectAsStateWithLifecycle()
-        SectionTitle("🏅 Badges  ${badges.count { it.earned }}/${badges.size}")
+        SectionTitle("🏅 Badges", action = "${badges.count { it.earned }}/${badges.size}")
         BadgeGrid(badges)
 
-        SectionTitle("🎯 Daily goal")
-        val goals = listOf(30, 50, 80, 120)
-        Segmented(goals.map { "$it pts" }, goals.indexOf(vm.dailyGoal).coerceAtLeast(0), { vm.changeDailyGoal(goals[it]) })
-
-        SectionTitle("🥗 Body & nutrition")
-        Panel(onClick = { vm.editingBody = true }) {
-            val b = vm.body
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        SectionTitle("⚙️ Settings")
+        Panel(padding = PaddingValues(0.dp)) {
+            Column(Modifier.padding(16.dp)) {
+                Text("🎯 Daily goal", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(10.dp))
+                val goals = listOf(30, 50, 80, 120)
+                Segmented(goals.map { "$it" }, goals.indexOf(vm.dailyGoal).coerceAtLeast(0), { vm.changeDailyGoal(goals[it]) })
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Row(
+                Modifier.fillMaxWidth().clickable { vm.editingBody = true }.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
-                    Text(if (b == null) "Not set" else "${b.heightCm} cm · ${b.weightKg} kg · ${b.goal.label}", style = MaterialTheme.typography.titleSmall)
+                    Text("🥗 Body & nutrition", style = MaterialTheme.typography.titleSmall)
+                    val b = vm.body
                     Text(
-                        vm.targets?.let { "${it.kcal} kcal and ${it.protein} g protein a day" } ?: "Tap to set up",
+                        if (b == null) "Tap to set up" else "${b.heightCm} cm · ${b.weightKg} kg · ${vm.targets?.kcal ?: 0} kcal",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Glyph(R.drawable.ic_chevron, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18)
             }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Column(Modifier.padding(16.dp)) {
+                Text("🎨 Theme", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(10.dp))
+                Segmented(listOf("System", "Light", "Dark"), ThemeMode.entries.indexOf(vm.theme), { vm.changeTheme(ThemeMode.entries[it]) })
+            }
         }
 
-        SectionTitle("🎨 Appearance")
-        Segmented(
-            options = listOf("System", "Light", "Dark"),
-            selected = ThemeMode.entries.indexOf(vm.theme),
-            onSelect = { vm.changeTheme(ThemeMode.entries[it]) },
-        )
-    }
-
-    vm.auth.recoveryCode?.let { code -> RecoveryCodeDialog(code, vm::dismissRecoveryCode) }
-}
-
-@Composable
-private fun Account(vm: AppViewModel, name: String) {
-    val stats by vm.stats.collectAsStateWithLifecycle()
-    val workouts by vm.workouts.collectAsStateWithLifecycle()
-    val sync by vm.sync.collectAsStateWithLifecycle()
-    val pending = workouts.count { !it.synced }
-    var confirmSignOut by rememberSaveable { mutableStateOf(false) }
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center,
-        ) { Text(name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge) }
-        Column(Modifier.padding(start = 14.dp)) {
-            Text(name, style = MaterialTheme.typography.headlineSmall)
-            Text("Fit Nova member", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (name != null) {
+            Panel(onClick = { if (pending > 0) confirmSignOut = true else vm.signOut() }, padding = PaddingValues(16.dp)) {
+                Text("🚪 Sign out", style = MaterialTheme.typography.titleSmall, color = Tone.bad)
+            }
         }
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        StatTile("Workouts", "${stats.totalWorkouts}", Modifier.weight(1f))
-        StatTile("Points", "${stats.totalPoints}", Modifier.weight(1f))
-        StatTile("Streak", "${stats.streak}", Modifier.weight(1f), unit = "d")
-    }
-
-    SectionTitle("☁️ Sync")
-    Panel {
-        val status = when (val s = sync) {
-            SyncState.Running -> "Syncing…"
-            is SyncState.Done -> "Last synced ${DateUtils.getRelativeTimeSpanString(s.at)}"
-            is SyncState.Failed -> s.message
-            SyncState.Idle -> "Not synced yet"
-        }
-        Text(status, style = MaterialTheme.typography.bodyMedium)
         Text(
-            if (pending == 0) "✓ All backed up" else "⏳ $pending waiting",
-            style = MaterialTheme.typography.bodySmall,
+            "Fit Nova 1.0",
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(12.dp))
-        SecondaryButton("Sync now", onClick = vm::syncNow)
     }
-
-    Spacer(Modifier.height(4.dp))
-    SecondaryButton("Sign out", onClick = { if (pending > 0) confirmSignOut = true else vm.signOut() }, color = Tone.bad)
 
     if (confirmSignOut) {
         AlertDialog(
             onDismissRequest = { confirmSignOut = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
             title = { Text("Sign out?") },
             text = { Text("$pending workout(s) not uploaded yet.") },
-            confirmButton = { TextButton(onClick = { confirmSignOut = false; vm.signOut() }) { Text("Sign out") } },
+            confirmButton = { TextButton(onClick = { confirmSignOut = false; vm.signOut() }) { Text("Sign out", color = Tone.bad) } },
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
         )
+    }
+    vm.auth.recoveryCode?.let { code -> RecoveryCodeDialog(code, vm::dismissRecoveryCode) }
+}
+
+/** Avatar, level with XP bar, and lifetime stats. */
+@Composable
+private fun ProfileCard(name: String, stats: Stats) {
+    val lv = level(stats.totalPoints)
+    Panel {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(64.dp).clip(CircleShape).background(Tone.accent),
+                contentAlignment = Alignment.Center,
+            ) { Text(name.take(1).uppercase(), style = MaterialTheme.typography.headlineSmall, color = Color.White) }
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(name, style = MaterialTheme.typography.headlineSmall, maxLines = 1)
+                Text("⭐ Level ${lv.number} · ${lv.title}", style = MaterialTheme.typography.labelLarge, color = Tone.accent)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Row {
+            Text("${lv.into} / ${lv.span} XP", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Text("Lv ${lv.number + 1}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Spacer(Modifier.height(6.dp))
+        Meter(lv.progress, Tone.accent, Modifier.fillMaxWidth())
+        Spacer(Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatBox("🏋️", "${stats.totalWorkouts}", "Workouts", Modifier.weight(1f))
+            StatBox("⚡", "${stats.totalPoints}", "Points", Modifier.weight(1f))
+            StatBox("🔥", "${stats.bestStreak}", "Best streak", Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StatBox(emoji: String, value: String, label: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceVariant).padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(emoji, style = MaterialTheme.typography.titleMedium)
+        Text(value, style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Sync status at a glance with a one-tap sync. */
+@Composable
+private fun SyncCard(vm: AppViewModel, pending: Int) {
+    val sync by vm.sync.collectAsStateWithLifecycle()
+    data class Look(val icon: String, val title: String, val sub: String, val tone: Color)
+    val look = when (val s = sync) {
+        SyncState.Running -> Look("🔄", "Syncing…", "Uploading and refreshing", Tone.accent)
+        is SyncState.Failed -> if (s.offline) Look("📴", "Offline", if (pending > 0) "$pending waiting to upload" else "Will sync when online", Tone.warn)
+        else Look("⚠️", "Sync issue", s.message, Tone.bad)
+        is SyncState.Done -> if (pending > 0) Look("⏳", "$pending waiting", "Tap sync to upload", Tone.warn)
+        else Look("☁️", "All synced", "Last synced ${DateUtils.getRelativeTimeSpanString(s.at)}", Tone.good)
+        SyncState.Idle -> Look("☁️", "Not synced yet", if (pending > 0) "$pending waiting" else "Tap sync", MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Panel(padding = PaddingValues(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(46.dp).clip(CircleShape).background(look.tone.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) { Text(look.icon, style = MaterialTheme.typography.titleMedium) }
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(look.title, style = MaterialTheme.typography.titleSmall)
+                Text(look.sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+            }
+            Chip("Sync", selected = true, onClick = { vm.syncNow(manual = true) })
+        }
     }
 }
 
@@ -156,8 +215,7 @@ private fun AuthForm(vm: AppViewModel) {
     val minLength = if (create) 12 else 1
     val ready = username.isNotBlank() && password.length >= minLength
 
-    ExerciseIcon(app.fitnova.domain.Exercise.LUNGE, Modifier.size(110.dp), MaterialTheme.colorScheme.onSurfaceVariant)
-    Text(if (create) "Create account" else "Sign in", style = MaterialTheme.typography.headlineMedium)
+    Text(if (create) "✨ Create account" else "🔐 Sign in", style = MaterialTheme.typography.titleLarge)
     Text(
         "Old Fit Nova accounts work here.",
         style = MaterialTheme.typography.bodyMedium,

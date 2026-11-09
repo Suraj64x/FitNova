@@ -28,3 +28,24 @@ fun badges(all: List<Workout>, zone: ZoneId = ZoneId.systemDefault()): List<Badg
         Badge("points500", "⭐", "500 points", s.totalPoints >= 500),
     )
 }
+
+data class Level(val number: Int, val title: String, val into: Int, val span: Int) {
+    val progress get() = if (span == 0) 1f else into.toFloat() / span
+}
+
+/** Level n starts at 50·n·(n−1) points: 0, 100, 300, 600, 1000, 1500… */
+fun level(points: Int): Level {
+    var n = 1
+    while (50 * (n + 1) * n <= points) n++
+    val start = 50 * n * (n - 1)
+    val next = 50 * (n + 1) * n
+    val title = when (n) {
+        1 -> "Rookie"
+        2 -> "Mover"
+        3 -> "Regular"
+        4 -> "Athlete"
+        5 -> "Pro"
+        else -> "Legend"
+    }
+    return Level(n, title, points - start, next - start)
+}

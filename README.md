@@ -6,7 +6,8 @@ A minimal, fast fitness app for Android. It runs well on low-end phones.
 - **27 exercises** across upper body, lower body, core and cardio, each with a stick-figure icon. 23 of them have camera tracking.
 - **Dashboard:** today's points ring, streaks, weekly bars, a 30-day trend, a form-score trend and your exercise mix.
 - **Nutrition:** calorie and macro targets (Mifflin–St Jeor formula), a meal log, and researched recipes, mostly Indian plus some fitness staples.
-- **Leaderboard:** global rankings by week, month or all time, with a podium for the top three.
+- **Leaderboards:** global rankings, plus private **groups** (6-character invite codes) and public **clubs**, each with its own board and a top-3 podium.
+- **Badges:** 12 achievements (streaks, reps, perfect form, early bird…) worked out from your history.
 - **Offline-first:** workouts save on the phone and sync to Supabase in the background.
 
 ## Build
@@ -23,7 +24,7 @@ The build produces one APK per CPU type (arm64-v8a, armeabi-v7a, x86_64), in `ap
 
 Accounts use the existing `nova-auth` edge function, so usernames from the old app keep working.
 
-Workouts and the leaderboard need the tables in `supabase/migrations/20261107000000_fitnova_m1.sql`. The migration only adds new `fn_*` tables and functions; it doesn't touch existing ones. To apply it, either:
+Run both migrations in order: `20261107000000_fitnova_m1.sql` (workouts, global leaderboard), then `20261108000000_fitnova_m2.sql` (groups, clubs, group boards). They only add new `fn_*` tables and functions and don't touch existing ones. To apply them, either:
 - paste it into the Supabase SQL editor, or
 - run `supabase db push`.
 

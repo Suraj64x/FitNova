@@ -8,12 +8,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.fitnova.data.ApiException
+import app.fitnova.data.Group
 import app.fitnova.data.Rank
 import app.fitnova.data.SyncJob
 import app.fitnova.data.SyncState
 import app.fitnova.data.loadExercisePhotos
 import app.fitnova.data.loadRecipes
 import app.fitnova.domain.Activity
+import app.fitnova.domain.badges
 import app.fitnova.domain.Body
 import app.fitnova.domain.Exercise
 import app.fitnova.domain.Goal
@@ -41,6 +43,15 @@ enum class Tab { HOME, TRAIN, FOOD, RANKS, PROFILE }
 enum class Period(val id: String, val label: String) { WEEK("week", "Week"), MONTH("month", "Month"), ALL("all", "All time") }
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+enum class Scope(val label: String) { GLOBAL("Global"), GROUPS("Groups"), COMMUNITIES("Clubs") }
+
+data class GroupsState(
+    val mine: List<Group> = emptyList(),
+    val communities: List<Group> = emptyList(),
+    val loading: Boolean = false,
+    val error: String? = null,
+)
 
 /** Full-screen steps of a workout, shown above the tabs. */
 sealed interface WorkoutFlow {
@@ -73,6 +84,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, stats(emptyList()))
     val sync = Graph.sync.state
     val meals = Graph.meals.today
+    val badges = workouts.map { badges(it) }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, badges(emptyList()))
+
+    var scope by mutableStateOf(Scope.GLOBAL)
+    var groups by mutableStateOf(GroupsState())
+        private set
+    var openGroup by mutableStateOf<Group?>(null)
+        private set
+    var groupBoard by mutableStateOf(BoardState())
+        private set
 
     var recipes by mutableStateOf<List<Recipe>>(emptyList())
         private set
@@ -136,9 +157,83 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         flow = null
         tab = Tab.HOME
         viewModelScope.launch {
+            val before = badges(workouts.value).filter { it.earned }.map { it.id }.toSet()
             Graph.store.save(listOf(workout))
             _messages.emit("Workout saved · +${workout.points} pts")
+            badges(workouts.value).firstOrNull { it.earned && it.id !in before }?.let { _messages.emit("${it.emoji} New badge: ${it.title}") }
             syncNow()
+        }
+    }
+
+    // --- Groups & communities ---
+
+    fun loadGroups() {
+        if (username == null) return
+        groups = groups.copy(loading = true, error = null)
+        viewModelScope.launch {
+            groups = try {
+                GroupsState(mine = Graph.api.myGroups(), communities = Graph.api.communities())
+            } catch (e: ApiException) {
+                groups.copy(loading = false, error = e.message)
+            }
+        }
+    }
+
+    fun openGroup(g: Group) {
+        openGroup = g
+        groupBoard = BoardState()
+        loadGroupBoard(Period.WEEK)
+    }
+
+    fun closeGroup() {
+        openGroup = null
+    }
+
+    fun loadGroupBoard(period: Period) {
+        val g = openGroup ?: return
+        groupBoard = groupBoard.copy(period = period, loading = true, error = null)
+        viewModelScope.launch {
+            val next = try {
+                groupBoard.copy(rows = Graph.api.groupLeaderboard(g.id, period.id, ZoneId.systemDefault().id), loading = false, updatedAt = System.currentTimeMillis())
+            } catch (e: ApiException) {
+                groupBoard.copy(loading = false, error = e.message)
+            }
+            if (openGroup?.id == g.id && groupBoard.period == period) groupBoard = next
+        }
+    }
+
+    fun createGroup(name: String, community: Boolean, emoji: String) = groupAction {
+        val g = Graph.api.createGroup(name.trim(), if (community) "community" else "group", emoji)
+        _messages.emit("${g.emoji} ${g.name} created")
+        openGroup(g)
+    }
+
+    fun joinGroup(code: String) = groupAction {
+        val g = Graph.api.joinGroup(code)
+        _messages.emit("${g.emoji} Joined ${g.name}")
+        openGroup(g)
+    }
+
+    fun joinCommunity(g: Group) = groupAction {
+        Graph.api.joinCommunity(g.id)
+        _messages.emit("${g.emoji} Joined ${g.name}")
+    }
+
+    fun leaveGroup(g: Group) = groupAction {
+        Graph.api.leaveGroup(g.id)
+        openGroup = null
+        _messages.emit("Left ${g.name}")
+    }
+
+    /** Runs a group change, reports errors as a message, then refreshes the lists. */
+    private fun groupAction(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (e: ApiException) {
+                _messages.emit(e.message ?: "Something went wrong")
+            }
+            loadGroups()
         }
     }
 
@@ -240,6 +335,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             username = null
             board = BoardState()
             boardCache.clear()
+            groups = GroupsState()
+            openGroup = null
             auth = AuthState()
         }
     }

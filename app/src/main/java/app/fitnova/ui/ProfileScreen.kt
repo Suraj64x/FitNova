@@ -30,7 +30,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -53,6 +55,10 @@ fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
     ) {
         val name = vm.username
         if (name == null) AuthForm(vm) else Account(vm, name)
+
+        val badges by vm.badges.collectAsStateWithLifecycle()
+        SectionTitle("🏅 Badges  ${badges.count { it.earned }}/${badges.size}")
+        BadgeGrid(badges)
 
         SectionTitle("🎯 Daily goal")
         val goals = listOf(30, 50, 80, 120)
@@ -208,4 +214,36 @@ private fun RecoveryCodeDialog(code: String, onDone: () -> Unit) {
             }) { Text("Copy") }
         },
     )
+}
+
+/** Earned badges in colour on a tinted disc; locked ones faded. */
+@Composable
+private fun BadgeGrid(badges: List<app.fitnova.domain.Badge>) {
+    Panel(padding = PaddingValues(12.dp)) {
+        badges.chunked(4).forEach { row ->
+            Row(Modifier.fillMaxWidth()) {
+                row.forEach { b ->
+                    Column(Modifier.weight(1f).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            Modifier
+                                .size(54.dp)
+                                .clip(CircleShape)
+                                .background(if (b.earned) Tone.accent.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(b.emoji, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.alpha(if (b.earned) 1f else 0.25f))
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            b.title,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (b.earned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

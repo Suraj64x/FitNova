@@ -19,6 +19,20 @@ class ApiException(val code: Int, message: String) : Exception(message)
 
 data class Rank(val userId: String, val name: String, val points: Int, val workouts: Int, val rank: Int)
 
+/** A private group (joined with [inviteCode]) or a public community. */
+data class Group(
+    val id: String,
+    val kind: String,
+    val name: String,
+    val emoji: String,
+    val inviteCode: String?,
+    val members: Int,
+    val isOwner: Boolean,
+    val joined: Boolean,
+) {
+    val isCommunity get() = kind == "community"
+}
+
 /**
  * Talks to the existing Fit Nova Supabase project.
  * Accounts go through the old `nova-auth` edge function (same usernames and passwords as the old app);
@@ -95,14 +109,56 @@ class Api(private val session: SessionStore) {
         }
     }
 
-    suspend fun leaderboard(period: String, zone: String): List<Rank> {
-        val body = JSONObject().put("period", period).put("tz", zone)
-        val rows = JSONArray(authed("POST", "/rest/v1/rpc/fn_leaderboard", body.toString()))
-        return (0 until rows.length()).map { i ->
-            val o = rows.getJSONObject(i)
-            Rank(o.getString("user_id"), o.optString("display_name", "Athlete"), o.optInt("points"), o.optInt("workouts"), o.optInt("rank"))
-        }
+    suspend fun leaderboard(period: String, zone: String): List<Rank> =
+        ranks(authed("POST", "/rest/v1/rpc/fn_leaderboard", JSONObject().put("period", period).put("tz", zone).toString()))
+
+    suspend fun groupLeaderboard(groupId: String, period: String, zone: String): List<Rank> {
+        val body = JSONObject().put("p_id", groupId).put("period", period).put("tz", zone)
+        return ranks(authed("POST", "/rest/v1/rpc/fn_group_leaderboard", body.toString()))
     }
+
+    suspend fun myGroups(): List<Group> = objects(authed("POST", "/rest/v1/rpc/fn_my_groups", "{}")).map { group(it, joined = true) }
+
+    suspend fun communities(): List<Group> =
+        objects(authed("POST", "/rest/v1/rpc/fn_communities", "{}")).map { group(it.put("kind", "community"), joined = it.optBoolean("joined")) }
+
+    suspend fun createGroup(name: String, kind: String, emoji: String): Group {
+        val body = JSONObject().put("p_name", name).put("p_kind", kind).put("p_emoji", emoji)
+        return group(JSONObject(authed("POST", "/rest/v1/rpc/fn_create_group", body.toString())), joined = true, members = 1, owner = true)
+    }
+
+    suspend fun joinGroup(code: String): Group {
+        val body = JSONObject().put("p_code", code.trim().uppercase())
+        return group(JSONObject(authed("POST", "/rest/v1/rpc/fn_join_group", body.toString())), joined = true)
+    }
+
+    suspend fun joinCommunity(id: String) {
+        authed("POST", "/rest/v1/rpc/fn_join_community", JSONObject().put("p_id", id).toString())
+    }
+
+    suspend fun leaveGroup(id: String) {
+        authed("POST", "/rest/v1/rpc/fn_leave_group", JSONObject().put("p_id", id).toString())
+    }
+
+    private fun objects(text: String): List<JSONObject> {
+        val rows = JSONArray(text)
+        return (0 until rows.length()).map { rows.getJSONObject(it) }
+    }
+
+    private fun ranks(text: String) = objects(text).map { o ->
+        Rank(o.getString("user_id"), o.optString("display_name", "Athlete"), o.optInt("points"), o.optInt("workouts"), o.optInt("rank"))
+    }
+
+    private fun group(o: JSONObject, joined: Boolean, members: Int? = null, owner: Boolean? = null) = Group(
+        id = o.getString("id"),
+        kind = o.optString("kind", "group"),
+        name = o.getString("name"),
+        emoji = o.optString("emoji", "\uD83D\uDCAA"),
+        inviteCode = if (o.isNull("invite_code")) null else o.optString("invite_code").ifBlank { null },
+        members = members ?: o.optInt("members", 1),
+        isOwner = owner ?: o.optBoolean("is_owner"),
+        joined = joined,
+    )
 
     private fun accept(json: JSONObject, username: String) {
         val user = json.optJSONObject("user") ?: throw ApiException(500, json.optString("message", "Unexpected sign-in response"))

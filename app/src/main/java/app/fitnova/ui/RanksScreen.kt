@@ -1,6 +1,29 @@
 package app.fitnova.ui
 
 import android.text.format.DateUtils
+import android.content.Intent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.sp
+import app.fitnova.BoardState
+import app.fitnova.GroupsState
+import app.fitnova.Scope
+import app.fitnova.data.Group
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,9 +61,15 @@ private val Medals = listOf(Color(0xFFD4A72C), Color(0xFF9AA3AD), Color(0xFFB873
 
 @Composable
 fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
-    val board = vm.board
     val signedIn = vm.username != null
-    LaunchedEffect(signedIn) { if (signedIn) vm.loadBoard() }
+    LaunchedEffect(signedIn) {
+        if (signedIn) {
+            vm.loadBoard()
+            vm.loadGroups()
+        }
+    }
+    var creating by rememberSaveable { mutableStateOf<Boolean?>(null) } // null = closed, true = club, false = group
+    var joining by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding() + 16.dp, bottom = padding.calculateBottomPadding() + 24.dp),
@@ -48,62 +77,258 @@ fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Leaderboard", style = MaterialTheme.typography.headlineMedium)
-                    Tag("🌍 Global", Tone.accent, Modifier.padding(top = 6.dp))
-                }
+                Text("Leaderboard", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
                 if (signedIn) {
                     Box(
-                        Modifier.size(40.dp).clip(MaterialTheme.shapes.small).clickable { vm.loadBoard() },
+                        Modifier.size(40.dp).clip(MaterialTheme.shapes.small).clickable {
+                            vm.loadBoard()
+                            vm.loadGroups()
+                        },
                         contentAlignment = Alignment.Center,
                     ) { Glyph(R.drawable.ic_refresh, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
         }
         item {
-            Segmented(Period.entries.map { it.label }, Period.entries.indexOf(board.period), { vm.loadBoard(Period.entries[it]) })
+            val emoji = mapOf(Scope.GLOBAL to "🌍", Scope.GROUPS to "👥", Scope.COMMUNITIES to "🏘️")
+            Segmented(Scope.entries.map { "${emoji[it]} ${it.label}" }, Scope.entries.indexOf(vm.scope), { vm.scope = Scope.entries[it] })
         }
-        item {
-            when {
-                !signedIn -> Panel {
+        if (!signedIn) {
+            item {
+                Panel {
                     EmptyNote("Sign in to compete", figure = app.fitnova.domain.Exercise.HIGH_KNEES)
                     PrimaryButton("Sign in", onClick = { vm.tab = Tab.PROFILE })
                 }
-                board.rows.isEmpty() && board.loading -> Panel(padding = PaddingValues(0.dp)) { repeat(5) { PlaceholderRow() } }
-                board.rows.isEmpty() && board.error != null -> Panel {
-                    EmptyNote("Couldn't load", board.error, emoji = "📡")
-                    SecondaryButton("Try again", onClick = { vm.loadBoard() })
-                }
-                board.rows.isEmpty() -> Panel { EmptyNote("No scores yet", emoji = "🏁") }
-                else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val me = Graph.session.userId
-                    val rest = if (board.rows.size >= 3) {
-                        Podium(board.rows.take(3), me)
-                        board.rows.drop(3)
-                    } else {
-                        board.rows
+            }
+            return@LazyColumn
+        }
+        when (vm.scope) {
+            Scope.GLOBAL -> {
+                item { Segmented(Period.entries.map { it.label }, Period.entries.indexOf(vm.board.period), { vm.loadBoard(Period.entries[it]) }) }
+                item { Board(vm.board, onRetry = { vm.loadBoard() }) }
+            }
+            Scope.GROUPS -> {
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        SecondaryButton("＋ Create", onClick = { creating = false }, modifier = Modifier.weight(1f))
+                        SecondaryButton("🔑 Join", onClick = { joining = true }, modifier = Modifier.weight(1f))
                     }
-                    if (rest.isNotEmpty()) {
-                        Panel(padding = PaddingValues(0.dp)) {
-                            rest.forEachIndexed { i, r ->
-                                RankRow(r, me = r.userId == me)
-                                if (i < rest.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            }
-                        }
+                }
+                val mine = vm.groups.mine.filter { !it.isCommunity }
+                item { GroupList(vm.groups, mine, empty = "No groups yet" to "👥", onOpen = vm::openGroup, onJoin = null) }
+            }
+            Scope.COMMUNITIES -> {
+                item { SecondaryButton("＋ New club", onClick = { creating = true }) }
+                item { GroupList(vm.groups, vm.groups.communities, empty = "No clubs yet" to "🏘️", onOpen = vm::openGroup, onJoin = vm::joinCommunity) }
+            }
+        }
+    }
+
+    vm.openGroup?.let { g ->
+        GroupSheet(
+            group = g,
+            board = vm.groupBoard,
+            onPeriod = vm::loadGroupBoard,
+            onJoin = if (g.isCommunity && vm.groups.communities.none { it.id == g.id && it.joined }) ({ vm.joinCommunity(g) }) else null,
+            onLeave = { vm.leaveGroup(g) },
+            onDismiss = vm::closeGroup,
+        )
+    }
+    creating?.let { club ->
+        CreateGroupDialog(club, onCreate = { name, emoji -> creating = null; vm.createGroup(name, club, emoji) }, onDismiss = { creating = null })
+    }
+    if (joining) JoinDialog(onJoin = { code -> joining = false; vm.joinGroup(code) }, onDismiss = { joining = false })
+}
+
+/** Podium for the top three, then the rest as rows. Shared by the global and group boards. */
+@Composable
+private fun Board(board: BoardState, onRetry: () -> Unit) {
+    val me = Graph.session.userId
+    when {
+        board.rows.isEmpty() && board.loading -> Panel(padding = PaddingValues(0.dp)) { repeat(5) { PlaceholderRow() } }
+        board.rows.isEmpty() && board.error != null -> Panel {
+            EmptyNote("Couldn't load", board.error, emoji = "📡")
+            SecondaryButton("Try again", onClick = onRetry)
+        }
+        board.rows.isEmpty() -> Panel { EmptyNote("No scores yet", emoji = "🏁") }
+        else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val rest = if (board.rows.size >= 3) {
+                Podium(board.rows.take(3), me)
+                board.rows.drop(3)
+            } else {
+                board.rows
+            }
+            if (rest.isNotEmpty()) {
+                Panel(padding = PaddingValues(0.dp)) {
+                    rest.forEachIndexed { i, r ->
+                        RankRow(r, me = r.userId == me)
+                        if (i < rest.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }
-        }
-        if (signedIn) {
-            item {
+            if (board.updatedAt > 0) {
                 Text(
-                    if (board.updatedAt > 0) "Updated ${DateUtils.getRelativeTimeSpanString(board.updatedAt)}" else "",
+                    "Updated ${DateUtils.getRelativeTimeSpanString(board.updatedAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
+}
+
+@Composable
+private fun GroupList(state: GroupsState, list: List<Group>, empty: Pair<String, String>, onOpen: (Group) -> Unit, onJoin: ((Group) -> Unit)?) {
+    when {
+        list.isEmpty() && state.loading -> Panel(padding = PaddingValues(0.dp)) { repeat(3) { PlaceholderRow() } }
+        list.isEmpty() && state.error != null -> Panel { EmptyNote("Couldn't load", state.error, emoji = "📡") }
+        list.isEmpty() -> Panel { EmptyNote(empty.first, emoji = empty.second) }
+        else -> Panel(padding = PaddingValues(0.dp)) {
+            list.forEachIndexed { i, g ->
+                Row(
+                    Modifier.fillMaxWidth().clickable { onOpen(g) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        Modifier.size(46.dp).clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center,
+                    ) { Text(g.emoji, style = MaterialTheme.typography.titleLarge) }
+                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                        Text(g.name, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        Text("👤 ${g.members}${if (g.isOwner) " · 👑" else ""}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    when {
+                        onJoin != null && !g.joined -> Chip("Join", selected = true, onClick = { onJoin(g) })
+                        onJoin != null -> Tag("✓ Joined", Tone.good)
+                        else -> Glyph(R.drawable.ic_chevron, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18)
+                    }
+                }
+                if (i < list.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupSheet(
+    group: Group,
+    board: BoardState,
+    onPeriod: (Period) -> Unit,
+    onJoin: (() -> Unit)?,
+    onLeave: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    var confirmLeave by remember { mutableStateOf(false) }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(60.dp).clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) { Text(group.emoji, style = MaterialTheme.typography.headlineMedium) }
+                Column(Modifier.padding(start = 14.dp)) {
+                    Text(group.name, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        "${if (group.isCommunity) "🏘️ Club" else "👥 Group"} · 👤 ${group.members}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            group.inviteCode?.let { code ->
+                Panel(padding = PaddingValues(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("🔑 Invite code", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(code, style = MaterialTheme.typography.headlineSmall.copy(fontFamily = FontFamily.Monospace, letterSpacing = 4.sp))
+                        }
+                        Chip("Share", selected = true, onClick = {
+                            val text = "Join my Fit Nova group \"${group.name}\" with code $code"
+                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
+                        })
+                    }
+                }
+            }
+            if (onJoin != null) PrimaryButton("Join club", onClick = onJoin)
+            Segmented(Period.entries.map { it.label }, Period.entries.indexOf(board.period), { onPeriod(Period.entries[it]) })
+            Board(board, onRetry = { onPeriod(board.period) })
+            if (onJoin == null) SecondaryButton("Leave", onClick = { confirmLeave = true }, color = Tone.bad)
+        }
+    }
+    if (confirmLeave) {
+        AlertDialog(
+            onDismissRequest = { confirmLeave = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            title = { Text("Leave ${group.name}?") },
+            confirmButton = { TextButton(onClick = { confirmLeave = false; onLeave() }) { Text("Leave", color = Tone.bad) } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Cancel") } },
+        )
+    }
+}
+
+private val GroupEmoji = listOf("💪", "🔥", "🏃", "🧘", "⚡", "🌱", "🏆", "🚴")
+
+@Composable
+private fun CreateGroupDialog(club: Boolean, onCreate: (String, String) -> Unit, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var emoji by remember { mutableStateOf(GroupEmoji.first()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        shape = MaterialTheme.shapes.extraLarge,
+        title = { Text(if (club) "New club" else "New group") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(name, { name = it.take(40) }, label = { Text("Name") }, singleLine = true, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    GroupEmoji.forEach { e ->
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(if (e == emoji) Tone.accent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { emoji = e },
+                            contentAlignment = Alignment.Center,
+                        ) { Text(e) }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(enabled = name.trim().length >= 2, onClick = { onCreate(name, emoji) }) { Text("Create") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun JoinDialog(onJoin: (String) -> Unit, onDismiss: () -> Unit) {
+    var code by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        shape = MaterialTheme.shapes.extraLarge,
+        title = { Text("🔑 Join a group") },
+        text = {
+            OutlinedTextField(
+                code,
+                { v -> code = v.uppercase().filter { it.isLetterOrDigit() }.take(6) },
+                label = { Text("Invite code") },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                textStyle = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Monospace, letterSpacing = 4.sp),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = { TextButton(enabled = code.length == 6, onClick = { onJoin(code) }) { Text("Join") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Composable

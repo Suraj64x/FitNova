@@ -27,7 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -41,10 +43,11 @@ import java.util.Locale
 
 /** Seven bars, Monday to Sunday, with today in the accent colour and point labels above non-empty days. */
 @Composable
-fun WeekBars(week: List<DayTotal>, today: LocalDate, modifier: Modifier = Modifier) {
+fun WeekBars(week: List<DayTotal>, today: LocalDate, modifier: Modifier = Modifier, goal: Int? = null) {
     val idle = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
     val past = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-    val max = (week.maxOfOrNull { it.points } ?: 0).coerceAtLeast(1)
+    val goalColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    val max = maxOf(week.maxOfOrNull { it.points } ?: 0, goal ?: 0).coerceAtLeast(1)
     val grow by animateFloatAsState(1f, tween(500), label = "bars")
     Column(modifier) {
         Row(Modifier.fillMaxWidth()) {
@@ -65,12 +68,14 @@ fun WeekBars(week: List<DayTotal>, today: LocalDate, modifier: Modifier = Modifi
             week.forEachIndexed { i, d ->
                 val h = if (d.points == 0) 4.dp.toPx() else (size.height * d.points / max * grow).coerceAtLeast(8.dp.toPx())
                 val color = when {
+                    goal != null && d.points >= goal -> Tone.good
                     d.day == today -> Tone.accent
                     d.points == 0 -> idle
                     else -> past
                 }
                 drawRoundRect(color, Offset(i * (barW + gap), size.height - h), Size(barW, h), radius)
             }
+            if (goal != null && goal > 0) dashedGoal(size.height - size.height * goal / max * grow, goalColor)
         }
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth()) {
@@ -89,15 +94,17 @@ fun WeekBars(week: List<DayTotal>, today: LocalDate, modifier: Modifier = Modifi
 
 /** Line chart with a flat 10% area fill. Null values are gaps (e.g. days without tracked workouts). */
 @Composable
-fun LineChart(values: List<Float?>, modifier: Modifier = Modifier, color: Color = Tone.accent, max: Float? = null) {
+fun LineChart(values: List<Float?>, modifier: Modifier = Modifier, color: Color = Tone.accent, max: Float? = null, goal: Float? = null) {
     val grid = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val goalColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
     Canvas(modifier) {
         for (i in 0..3) {
             val y = size.height * i / 3f
             drawLine(grid, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
         }
         if (values.isEmpty()) return@Canvas
-        val top = (max ?: values.filterNotNull().maxOrNull() ?: 0f).coerceAtLeast(1f)
+        val top = maxOf(max ?: values.filterNotNull().maxOrNull() ?: 0f, goal ?: 0f).coerceAtLeast(1f)
+        if (goal != null && goal > 0f) dashedGoal(size.height - goal / top * size.height * 0.9f, goalColor)
         val stepX = size.width / (values.size - 1).coerceAtLeast(1)
         val points = values.mapIndexedNotNull { i, v -> v?.let { Offset(i * stepX, size.height - (it / top).coerceIn(0f, 1f) * size.height * 0.9f) } }
         if (points.isEmpty()) return@Canvas
@@ -186,10 +193,17 @@ fun Meter(fraction: Float, color: Color, modifier: Modifier = Modifier) {
 
 /** Concentric progress rings (outermost first), each animating independently. */
 @Composable
-fun Rings(rings: List<Pair<Float, Color>>, modifier: Modifier = Modifier, stroke: Dp = 11.dp, gap: Dp = 4.dp) {
+fun Rings(
+    rings: List<Pair<Float, Color>>,
+    modifier: Modifier = Modifier,
+    stroke: Dp = 11.dp,
+    gap: Dp = 4.dp,
+    content: @Composable BoxScope.() -> Unit = {},
+) {
     val animated = rings.map { (p, _) -> animateFloatAsState(p.coerceIn(0f, 1f), tween(800), label = "rings").value }
-    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-    Canvas(modifier) {
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+    Box(modifier, contentAlignment = Alignment.Center) {
+    Canvas(Modifier.matchParentSize()) {
         val w = stroke.toPx()
         val step = w + gap.toPx()
         rings.forEachIndexed { i, (_, color) ->
@@ -197,8 +211,17 @@ fun Rings(rings: List<Pair<Float, Color>>, modifier: Modifier = Modifier, stroke
             val topLeft = Offset(inset, inset)
             val arc = Size(size.width - inset * 2, size.height - inset * 2)
             if (arc.width <= 0f) return@forEachIndexed
-            drawArc(color.copy(alpha = 0.16f).compositeOver(track), -90f, 360f, false, topLeft, arc, style = Stroke(w))
+            drawArc(color.copy(alpha = 0.13f).compositeOver(track), -90f, 360f, false, topLeft, arc, style = Stroke(w))
             if (animated[i] > 0f) drawArc(color, -90f, 360f * animated[i], false, topLeft, arc, style = Stroke(w, cap = StrokeCap.Round))
         }
     }
+    content()
+    }
+}
+
+private fun DrawScope.dashedGoal(y: Float, color: Color) {
+    drawLine(
+        color, Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx(),
+        cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx())),
+    )
 }

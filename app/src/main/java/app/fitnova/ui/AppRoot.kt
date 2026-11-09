@@ -3,7 +3,13 @@ package app.fitnova.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
@@ -108,24 +114,34 @@ private fun Tabs(vm: AppViewModel) {
     }
 }
 
-/** Plain bar: hairline on top, icon + label, no indicator pill. */
+/** Floating-style bar: rounded top corners, hairline border, accent pill behind the active icon. */
 @Composable
 private fun BottomBar(selected: Tab, onSelect: (Tab) -> Unit) {
     val colors = MaterialTheme.colorScheme
-    Column(Modifier.fillMaxWidth().background(colors.background)) {
-        HorizontalDivider(color = colors.outlineVariant)
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(66.dp), verticalAlignment = Alignment.CenterVertically) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = colors.surfaceContainer,
+        border = BorderStroke(1.dp, colors.outlineVariant),
+    ) {
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(72.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             TABS.forEach { item ->
                 val on = item.tab == selected
-                val tint = if (on) colors.onSurface else colors.onSurfaceVariant.copy(alpha = 0.75f)
                 Column(
-                    Modifier.weight(1f).fillMaxSize().clickable { onSelect(item.tab) },
+                    Modifier.weight(1f).fillMaxSize().clip(MaterialTheme.shapes.large).clickable { onSelect(item.tab) },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Glyph(item.icon, tint = tint, size = 24)
-                    Spacer(Modifier.height(4.dp))
-                    Text(item.label, style = MaterialTheme.typography.labelSmall, color = tint)
+                    Box(
+                        Modifier.clip(CircleShape).background(if (on) Tone.accent.copy(alpha = 0.14f) else Color.Transparent).padding(horizontal = 18.dp, vertical = 5.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Glyph(item.icon, tint = if (on) Tone.accent else colors.onSurfaceVariant, size = 22) }
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        item.label,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium),
+                        color = if (on) colors.onSurface else colors.onSurfaceVariant,
+                    )
                 }
             }
         }

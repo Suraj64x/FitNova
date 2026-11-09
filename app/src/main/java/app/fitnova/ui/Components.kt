@@ -77,13 +77,15 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier, action: String? = 
 
 /** Small status label: tinted fill, coloured dot and text. No glow. */
 @Composable
-fun Pill(text: String, tone: Color, modifier: Modifier = Modifier) {
+fun Pill(text: String, tone: Color, modifier: Modifier = Modifier, dot: Boolean = true) {
     Row(
         modifier.clip(CircleShape).background(tone.copy(alpha = 0.14f)).padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
-        Spacer(Modifier.width(7.dp))
+        if (dot) {
+            Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
+            Spacer(Modifier.width(7.dp))
+        }
         Text(text, style = MaterialTheme.typography.labelMedium, color = tone)
     }
 }

@@ -77,7 +77,7 @@ fun HomeScreen(vm: AppViewModel, padding: PaddingValues) {
                     )
                     Text(greeting(vm.username), style = MaterialTheme.typography.headlineMedium, maxLines = 2)
                 }
-                SyncBadge(sync, pending, signedIn = vm.username != null, onClick = vm::syncNow)
+                SyncBadge(sync, pending, signedIn = vm.username != null, onClick = { vm.syncNow(manual = true) })
             }
         }
         item { TodayCard(stats, vm.dailyGoal, vm.water, meals.intake().kcal, vm.targets?.kcal, onWater = { vm.addWater(1) }) }
@@ -117,7 +117,7 @@ fun HomeScreen(vm: AppViewModel, padding: PaddingValues) {
                 }
             }
         }
-        item { ActivityCard(stats, today, range) { range = it } }
+        item { ActivityCard(stats, today, range, vm.dailyGoal) { range = it } }
         item { FormCard(stats.formTrend) }
         if (stats.mix.isNotEmpty()) item { MixCard(stats.mix) }
         item { SectionTitle("Recent") }
@@ -149,10 +149,16 @@ private fun BigNumber(value: String, unit: String) {
     }
 }
 
-/** Three concentric rings for today: points, active minutes and water. */
+/** Today at a glance: three concentric rings (points, minutes, water) with a bar per metric and quick chips. */
 @Composable
 private fun TodayCard(stats: Stats, goal: Int, water: Int, eaten: Int, kcalTarget: Int?, onWater: () -> Unit) {
+    val pct = (stats.todayPoints * 100 / goal.coerceAtLeast(1)).coerceAtMost(999)
     Panel {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Today", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Tag(if (pct >= 100) "✅ Goal hit" else "🎯 $pct%", if (pct >= 100) Tone.good else Tone.accent)
+        }
+        Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Rings(
                 listOf(
@@ -160,62 +166,66 @@ private fun TodayCard(stats: Stats, goal: Int, water: Int, eaten: Int, kcalTarge
                     stats.todayMinutes.toFloat() / MINUTES_GOAL to Tone.good,
                     water.toFloat() / WATER_GOAL to Water,
                 ),
-                Modifier.size(132.dp),
-            )
+                Modifier.size(150.dp),
+                stroke = 12.dp,
+                gap = 3.dp,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("${stats.todayPoints}", style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"))
+                    Text("pts", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             Spacer(Modifier.width(18.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                RingLegend("⚡", "${stats.todayPoints}", "/ $goal pts", Tone.accent)
-                RingLegend("⏱", "${stats.todayMinutes}", "/ $MINUTES_GOAL min", Tone.good)
-                RingLegend("💧", "$water", "/ $WATER_GOAL  +1", Water, Modifier.clip(MaterialTheme.shapes.small).clickable(onClick = onWater))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Metric("⚡ Points", stats.todayPoints, goal, Tone.accent)
+                Metric("⏱ Minutes", stats.todayMinutes, MINUTES_GOAL, Tone.good)
+                Metric("💧 Water", water, WATER_GOAL, Water, onAdd = onWater)
             }
         }
         Spacer(Modifier.height(16.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(Modifier.height(12.dp))
-        Row {
-            MiniStat("🏋️", "${stats.todayReps}", "reps", Modifier.weight(1f))
-            MiniStat("🍽️", "$eaten", if (kcalTarget != null) "/ $kcalTarget kcal" else "kcal", Modifier.weight(1.4f))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Tag("🏋️ ${stats.todayReps} reps")
+            Tag("🍽️ $eaten${if (kcalTarget != null) "/$kcalTarget" else ""} kcal")
+            Tag("🔥 ${stats.streak}d")
         }
     }
 }
 
 @Composable
-private fun RingLegend(emoji: String, value: String, rest: String, color: Color, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
-        Spacer(Modifier.width(8.dp))
-        Text("$emoji ", style = MaterialTheme.typography.titleMedium)
-        Text(value, style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"))
-        Text(" $rest", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun Metric(label: String, value: Int, goal: Int, color: Color, onAdd: (() -> Unit)? = null) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Text("$value/$goal", style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
+            if (onAdd != null) {
+                Spacer(Modifier.width(6.dp))
+                Box(
+                    Modifier.size(22.dp).clip(CircleShape).background(color).clickable(onClick = onAdd),
+                    contentAlignment = Alignment.Center,
+                ) { Text("+", color = Color.White, style = MaterialTheme.typography.labelLarge) }
+            }
+        }
+        Spacer(Modifier.height(5.dp))
+        Meter(value.toFloat() / goal.coerceAtLeast(1), color, Modifier.fillMaxWidth())
     }
 }
 
 @Composable
-private fun MiniStat(emoji: String, value: String, unit: String, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Text(emoji, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.width(6.dp))
-        Text(value, style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"))
-        Spacer(Modifier.width(4.dp))
-        Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun ActivityCard(stats: Stats, today: LocalDate, range: Int, onRange: (Int) -> Unit) {
+private fun ActivityCard(stats: Stats, today: LocalDate, range: Int, goal: Int, onRange: (Int) -> Unit) {
     Panel {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("📈 Activity", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             val total = if (range == 0) stats.week.sumOf { it.points } else stats.month.sumOf { it.points }
             Text("$total pts", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Spacer(Modifier.height(12.dp))
+        Text("- - goal $goal/day", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(10.dp))
         Segmented(listOf("Week", "30 days"), range, onRange)
         Spacer(Modifier.height(16.dp))
         if (range == 0) {
-            WeekBars(stats.week, today)
+            WeekBars(stats.week, today, goal = goal)
         } else {
-            LineChart(stats.month.map { it.points.toFloat() }, Modifier.fillMaxWidth().height(130.dp))
+            LineChart(stats.month.map { it.points.toFloat() }, Modifier.fillMaxWidth().height(130.dp), goal = goal.toFloat())
             Spacer(Modifier.height(8.dp))
             Row {
                 Text(stats.month.first().day.format(DateTimeFormatter.ofPattern("d MMM")), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
@@ -280,15 +290,15 @@ private fun greeting(name: String?): String {
 @Composable
 private fun SyncBadge(state: SyncState, pending: Int, signedIn: Boolean, onClick: () -> Unit) {
     val (text, tone) = when {
-        !signedIn -> "Offline" to MaterialTheme.colorScheme.onSurfaceVariant
-        state is SyncState.Running -> "Syncing" to Tone.accent
-        state is SyncState.Failed && state.offline -> (if (pending > 0) "Offline · $pending" else "Offline") to Tone.warn
-        state is SyncState.Failed -> "Sync issue" to Tone.bad
-        pending > 0 -> "$pending to sync" to Tone.warn
-        else -> "Synced" to Tone.good
+        !signedIn -> "📴 Local" to MaterialTheme.colorScheme.onSurfaceVariant
+        state is SyncState.Running -> "🔄 Syncing" to Tone.accent
+        state is SyncState.Failed && state.offline -> (if (pending > 0) "📴 $pending" else "📴 Offline") to Tone.warn
+        state is SyncState.Failed -> "⚠️ Retry" to Tone.bad
+        pending > 0 -> "⏳ $pending" to Tone.warn
+        else -> "☁️ Synced" to Tone.good
     }
     Box(Modifier.clip(MaterialTheme.shapes.small).clickable(enabled = signedIn, onClick = onClick)) {
-        Pill(text, tone)
+        Pill(text, tone, dot = false)
     }
 }
 

@@ -12,3 +12,4 @@
 
 # Local logs
 *.log
+/dist/

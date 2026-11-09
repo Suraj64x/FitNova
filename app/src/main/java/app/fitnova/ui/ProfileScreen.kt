@@ -114,7 +114,7 @@ fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
             }
         }
         Text(
-            "Fit Nova 1.0",
+            "Fit Nova 1.4",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

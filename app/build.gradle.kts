@@ -14,8 +14,8 @@ android {
         applicationId = "app.fitnova"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0-m1"
+        versionCode = 14
+        versionName = "1.4"
 
         // Publishable (client-side) key from the existing Fit Nova Supabase project.
         buildConfigField("String", "SUPABASE_URL", "\"https://intwuixajqddizrdzbce.supabase.co\"")
@@ -38,7 +38,7 @@ android {
             isEnable = true
             reset()
             include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = false
+            isUniversalApk = true
         }
     }
 

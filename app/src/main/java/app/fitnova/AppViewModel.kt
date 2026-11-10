@@ -18,6 +18,7 @@ import app.fitnova.data.loadExercisePhotos
 import app.fitnova.data.loadRecipes
 import app.fitnova.domain.Activity
 import app.fitnova.domain.Alarm
+import app.fitnova.domain.Badge
 import app.fitnova.domain.badges
 import app.fitnova.domain.Body
 import app.fitnova.domain.Exercise
@@ -25,6 +26,7 @@ import app.fitnova.domain.Goal
 import app.fitnova.domain.Meal
 import app.fitnova.domain.Photo
 import app.fitnova.domain.Recipe
+import app.fitnova.domain.Routine
 import app.fitnova.domain.Sex
 import app.fitnova.domain.SleepEntry
 import app.fitnova.domain.SleepStats
@@ -33,6 +35,7 @@ import app.fitnova.domain.sleepStats
 import app.fitnova.domain.stats
 import app.fitnova.domain.targets
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,10 +72,30 @@ data class GroupsState(
     val error: String? = null,
 )
 
-/** Full-screen steps of a workout, shown above the tabs. */
+/**
+ * Full-screen steps of a workout, shown above the tabs (always dark).
+ * ponytail: lives in memory, so process death mid-set loses that set (finished steps are already saved);
+ * keep it in a SavedStateHandle if that shows up.
+ */
 sealed interface WorkoutFlow {
-    data class Live(val exercise: Exercise, val target: Int, val camera: Boolean) : WorkoutFlow
-    data class Done(val workout: Workout) : WorkoutFlow
+    /** A live exercise. In a [routine] it is step [step], and [rest] seconds of rest (previewing it) come first. */
+    data class Live(
+        val exercise: Exercise,
+        val target: Int,
+        val camera: Boolean,
+        val routine: Routine? = null,
+        val step: Int = 0,
+        val rest: Int = 0,
+    ) : WorkoutFlow
+
+    /** The summary. Every workout in [steps] is already saved; [workout] is the last one. [target] is 0 for routines. */
+    data class Done(
+        val workout: Workout,
+        val steps: List<Workout> = listOf(workout),
+        val routine: Routine? = null,
+        val target: Int = 0,
+        val badge: Badge? = null,
+    ) : WorkoutFlow
 }
 
 data class BoardState(
@@ -252,26 +275,96 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // --- Workouts ---
 
+    // This session's saved steps (a routine has several) and the save still running, so a delete never races it.
+    private val sessionSteps = mutableListOf<Workout>()
+    private var stepSave: Job? = null
+
+    /** The target used last time for [exercise], else its default. */
+    fun lastTarget(exercise: Exercise) = Graph.prefs.getInt("target_${exercise.id}", 0).takeIf { it > 0 } ?: exercise.defaultTarget
+
     fun start(exercise: Exercise, target: Int, camera: Boolean) {
         setup = null
+        sessionSteps.clear()
+        Graph.prefs.edit().putInt("target_${exercise.id}", target).apply()
         flow = WorkoutFlow.Live(exercise, target, camera)
     }
 
-    /** End a live session: with a result go to the summary, without one (nothing done) just close. */
-    fun finish(result: Workout?) {
-        flow = result?.let { WorkoutFlow.Done(it) }
+    fun startRoutine(routine: Routine, camera: Boolean) {
+        setup = null
+        sessionSteps.clear()
+        val first = routine.steps.first()
+        flow = WorkoutFlow.Live(first.exercise, first.target, camera, routine)
     }
 
+    /**
+     * A live step ended. Its result is saved at once, so nothing is lost. A routine moves on to its next step
+     * (rest first), anything else to the summary; with nothing saved it just closes.
+     */
+    fun finish(result: Workout?) {
+        val live = flow as? WorkoutFlow.Live ?: return
+        result?.let(::keepStep)
+        val routine = live.routine
+        val next = live.step + 1
+        flow = if (routine != null && next < routine.steps.size) {
+            val s = routine.steps[next]
+            WorkoutFlow.Live(s.exercise, s.target, live.camera, routine, next, routine.restSeconds)
+        } else {
+            summaryOf(live)
+        }
+    }
+
+    /** Stops a routine early: the steps already done (and [result]) stay saved and show in the summary. */
+    fun endRoutine(result: Workout?) {
+        val live = flow as? WorkoutFlow.Live ?: return
+        result?.let(::keepStep)
+        flow = summaryOf(live)
+    }
+
+    private fun keepStep(w: Workout) {
+        sessionSteps += w
+        val previous = stepSave
+        stepSave = viewModelScope.launch {
+            previous?.join()
+            Graph.store.save(listOf(w))
+        }
+    }
+
+    private fun summaryOf(live: WorkoutFlow.Live): WorkoutFlow.Done? {
+        if (sessionSteps.isEmpty()) return null
+        val steps = sessionSteps.toList()
+        val saved = stepSave
+        viewModelScope.launch {
+            saved?.join()
+            val badge = newBadgeFor(steps) ?: return@launch
+            (flow as? WorkoutFlow.Done)?.takeIf { it.steps == steps }?.let { flow = it.copy(badge = badge) }
+        }
+        return WorkoutFlow.Done(steps.last(), steps, live.routine, if (live.routine == null) live.target else 0)
+    }
+
+    /** The first badge the history earns only thanks to [added]. Worked out off the main thread. */
+    private suspend fun newBadgeFor(added: List<Workout>): Badge? {
+        val ids = added.mapTo(HashSet()) { it.id }
+        val all = workouts.value
+        return withContext(Dispatchers.Default) {
+            val before = badges(all.filter { it.id !in ids }).filter { it.earned }.mapTo(HashSet()) { it.id }
+            badges(all).firstOrNull { it.earned && it.id !in before }
+        }
+    }
+
+    /**
+     * The summary's Done: its workouts are already saved, so close, report the points and any new badge, and sync.
+     * A workout from anywhere else is stored first.
+     */
     fun save(workout: Workout) {
+        val done = (flow as? WorkoutFlow.Done)?.takeIf { d -> d.steps.any { it.id == workout.id } }
+        val steps = done?.steps ?: listOf(workout)
         flow = null
         tab = Tab.HOME
+        sessionSteps.clear()
         viewModelScope.launch {
-            val before = badges.value.filter { it.earned }.map { it.id }.toSet()
-            Graph.store.save(listOf(workout))
-            _messages.emit("Workout saved · +${workout.points} pts")
-            withContext(Dispatchers.Default) { badges(workouts.value) }
-                .firstOrNull { it.earned && it.id !in before }
-                ?.let { _messages.emit("${it.emoji} New badge: ${it.title}") }
+            if (done != null) stepSave?.join() else Graph.store.save(steps)
+            _messages.emit("+${steps.sumOf { it.points }} pts ✓")
+            (done?.badge ?: newBadgeFor(steps))?.let { _messages.emit("${it.emoji} New badge: ${it.title}") }
             syncNow()
         }
     }
@@ -366,8 +459,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** The summary's Delete: removes what this session saved (once the save is done) and closes. */
     fun discard() {
+        val done = flow as? WorkoutFlow.Done
         flow = null
+        sessionSteps.clear()
+        if (done != null) {
+            viewModelScope.launch {
+                stepSave?.join()
+                done.steps.forEach(::deleteWorkout)
+            }
+        }
     }
 
     /** [manual] = the user tapped sync, so report the outcome. */

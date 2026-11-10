@@ -1,12 +1,13 @@
 package app.fitnova.ui
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,17 +28,14 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,204 +45,295 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.fitnova.AppViewModel
 import app.fitnova.R
 import app.fitnova.domain.Category
 import app.fitnova.domain.Exercise
 import app.fitnova.domain.Mode
 import app.fitnova.domain.Photo
+import app.fitnova.domain.ROUTINES
+import app.fitnova.domain.Routine
 
-private val Featured = listOf(Exercise.PUSHUP, Exercise.SQUAT, Exercise.PLANK, Exercise.JACK, Exercise.LUNGE, Exercise.BURPEE)
+/** "20 reps" or "0:45". */
+internal fun Exercise.targetLabel(target: Int) = if (mode == Mode.HOLD) clock(target) else "$target reps"
 
 @Composable
 fun TrainScreen(vm: AppViewModel, padding: PaddingValues) {
+    // Saveable, so the filter and an open routine survive tab switches and rotation.
     var category by rememberSaveable { mutableStateOf<Category?>(null) }
-    val list = Exercise.entries.filter { category == null || it.category == category }
+    var preview by rememberSaveable { mutableStateOf<String?>(null) }
+    val moves = remember(category) { Exercise.entries.filter { category == null || it.category == category } }
     val photos = vm.exercisePhotos
-    val density = LocalDensity.current
-    val featuredPx = with(density) { 280.dp.roundToPx() }
-    val cardPx = with(density) { 180.dp.roundToPx() }
+    val gutter = if (LocalConfiguration.current.screenWidthDp >= 400) 20.dp else 16.dp
+    val photoPx = with(LocalDensity.current) { 200.dp.roundToPx() }
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding() + 18.dp, bottom = padding.calculateBottomPadding() + 28.dp),
+        columns = GridCells.Adaptive(136.dp),
+        contentPadding = PaddingValues(
+            start = gutter,
+            end = gutter,
+            top = padding.calculateTopPadding() + 8.dp,
+            bottom = padding.calculateBottomPadding() + 32.dp,
+        ),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) { Text("Train", style = MaterialTheme.typography.headlineMedium) }
-        if (category == null && Featured.any { photos[it.id] != null }) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(Featured.filter { photos[it.id] != null }, key = { it.id }) { ex ->
-                        PhotoCard(
-                            photos.getValue(ex.id).path, ex.title, "${ex.category.emoji} ${ex.defaultTarget} ${ex.unit}", featuredPx,
-                            onClick = { vm.setup = ex },
-                            modifier = Modifier.size(width = 280.dp, height = 170.dp),
-                            badge = { if (ex.trackable) CameraBadge(Modifier.align(Alignment.TopEnd)) },
-                        )
-                    }
-                }
+        item(key = "header", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
+            ScreenHeader("Train", trailing = { ProfileButton(vm.username, vm::openProfile) })
+        }
+        item(key = "routines_title", span = { GridItemSpan(maxLineSpan) }, contentType = "title") { SectionTitle("Routines") }
+        item(key = "routines", span = { GridItemSpan(maxLineSpan) }, contentType = "routines") {
+            LazyRow(
+                Modifier.bleed(gutter),
+                contentPadding = PaddingValues(horizontal = gutter),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(ROUTINES, key = { it.id }, contentType = { "routine" }) { r -> RoutineCard(r, onClick = { preview = r.id }) }
             }
         }
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item { Chip("All", category == null, { category = null }) }
-                items(Category.entries) { c -> Chip("${c.emoji} ${c.label}", category == c, { category = c }) }
+        item(key = "moves_title", span = { GridItemSpan(maxLineSpan) }, contentType = "title") { SectionTitle("Moves") }
+        item(key = "chips", span = { GridItemSpan(maxLineSpan) }, contentType = "chips") {
+            LazyRow(
+                Modifier.bleed(gutter).selectableGroup(),
+                contentPadding = PaddingValues(horizontal = gutter),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item(key = "all") { CategoryChip(null, category == null) { category = null } }
+                items(Category.entries, key = { it.name }) { c -> CategoryChip(c, category == c) { category = c } }
             }
         }
-        items(list, key = { it.id }) { ex -> ExerciseCard(ex, photos[ex.id], cardPx) { vm.setup = ex } }
+        items(moves, key = { it.id }, contentType = { "move" }) { ex ->
+            MoveCard(ex, photos[ex.id], vm.lastTarget(ex), photoPx) { vm.setup = ex }
+        }
     }
-}
 
-@Composable
-private fun BoxScope.StickBadge(ex: Exercise) {
-    Box(
-        Modifier.align(Alignment.BottomStart).padding(8.dp).size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer),
-        contentAlignment = Alignment.Center,
-    ) { ExerciseIcon(ex, Modifier.size(26.dp)) }
-}
-
-@Composable
-private fun CameraBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier.padding(8.dp).size(28.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer),
-        contentAlignment = Alignment.Center,
-    ) { Glyph(R.drawable.ic_camera, size = 15, tint = Tone.accent) }
-}
-
-@Composable
-private fun ExerciseCard(ex: Exercise, photo: Photo?, photoPx: Int, onClick: () -> Unit) {
-    Panel(onClick = onClick, padding = PaddingValues(8.dp)) {
-        Box(
-            Modifier.fillMaxWidth().aspectRatio(1.15f).clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (photo != null) {
-                AssetPhoto(photo.path, photoPx, Modifier.fillMaxSize(), ex.title)
-                StickBadge(ex)
-            } else {
-                ExerciseIcon(ex, Modifier.fillMaxSize(0.82f))
-            }
-            if (ex.trackable) CameraBadge(Modifier.align(Alignment.TopEnd))
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(ex.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
-        Text(
-            "${ex.defaultTarget} ${ex.unit}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
+    preview?.let(Routine::of)?.let { r ->
+        RoutineSheet(
+            r,
+            vm,
+            onStart = { camera ->
+                preview = null
+                vm.startRoutine(r, camera)
+            },
+            onDismiss = { preview = null },
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+/** Lets a row inside the padded grid scroll edge to edge; give it the same [gutter] as content padding. */
+private fun Modifier.bleed(gutter: Dp) = layout { measurable, constraints ->
+    val extra = gutter.roundToPx() * 2
+    val width = constraints.maxWidth + extra
+    val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+}
+
+/** Filter chip in the category's own colour (14 %); [category] null is "All". Selected = inverse, like [Chip]. */
 @Composable
-fun SetupSheet(exercise: Exercise, photo: Photo?, onStart: (target: Int, camera: Boolean) -> Unit, onDismiss: () -> Unit) {
-    var target by remember(exercise) { mutableIntStateOf(exercise.defaultTarget) }
-    var camera by remember(exercise) { mutableStateOf(exercise.trackable) }
-    val hold = exercise.mode == Mode.HOLD
-    val step = if (hold) 15 else if (target < 20) 1 else 5
-    val context = LocalContext.current
-    val heroPx = with(LocalDensity.current) { 360.dp.roundToPx() }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+private fun CategoryChip(category: Category?, selected: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val idle = category?.let { Nova.colors.of(it).copy(alpha = 0.14f).compositeOver(colors.surface) } ?: colors.surfaceVariant
+    Row(
+        Modifier
+            .minimumInteractiveComponentSize()
+            .heightIn(min = 36.dp)
+            .clip(CircleShape)
+            .background(if (selected) colors.inverseSurface else idle)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
-            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
-                Box(
-                    Modifier.fillMaxWidth().height(200.dp).clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (photo != null) {
-                        AssetPhoto(photo.path, heroPx, Modifier.fillMaxSize(), exercise.title)
-                        Box(
-                            Modifier.align(Alignment.BottomStart).padding(10.dp).size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer),
-                            contentAlignment = Alignment.Center,
-                        ) { ExerciseIcon(exercise, Modifier.size(40.dp)) }
-                    } else {
-                        ExerciseIcon(exercise, Modifier.size(170.dp))
-                    }
-                }
-                photo?.credit?.let { credit ->
-                    Text(
-                        "📷 $credit",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 6.dp).clickable(enabled = photo.page != null) {
-                            photo.page?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
-                        },
-                    )
-                }
-                Spacer(Modifier.height(14.dp))
-                Text(exercise.title, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(8.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Tag("${exercise.category.emoji} ${exercise.category.label}", Tone.accent)
-                    exercise.muscles.split(" · ").forEach { Tag(it) }
-                }
-                Spacer(Modifier.height(10.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    exercise.cues.forEach { Tag("✓ $it", Tone.good) }
-                }
+        if (category != null) {
+            Emoji(category.art, 20.dp)
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(
+            category?.label ?: "All",
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) colors.inverseOnSurface else colors.onSurface,
+            maxLines = 1,
+        )
+    }
+}
 
-                Spacer(Modifier.height(20.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    StepButton(R.drawable.ic_minus) { target = (target - step).coerceAtLeast(step) }
-                    Text(
-                        if (hold) clock(target) else "$target reps",
-                        style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center,
-                    )
-                    StepButton(R.drawable.ic_plus) { target = (target + step).coerceAtMost(if (hold) 600 else 300) }
-                }
-
-                Spacer(Modifier.height(16.dp))
-                Panel(padding = PaddingValues(14.dp)) {
-                    if (exercise.trackable) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text("📷 Camera check", style = MaterialTheme.typography.titleSmall)
-                                Text(
-                                    if (camera) "${exercise.cameraTip} · full points" else "Manual · half points",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Switch(
-                                checked = camera,
-                                onCheckedChange = { camera = it },
-                                colors = SwitchDefaults.colors(checkedTrackColor = Tone.accent, checkedThumbColor = Color.White),
-                            )
-                        }
-                    } else {
-                        Text("✋ Manual count · half points", style = MaterialTheme.typography.titleSmall)
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
+/** Exercise card tinted with its category colour: photo, camera badge, a two-line title and the target. */
+@Composable
+private fun MoveCard(ex: Exercise, photo: Photo?, target: Int, photoPx: Int, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val tint = Nova.colors.of(ex.category)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(tint.copy(alpha = 0.12f).compositeOver(colors.surfaceContainer))
+            .clickable(onClick = onClick)
+            .padding(6.dp),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(1.25f)
+                .clip(MaterialTheme.shapes.medium)
+                .background(tint.copy(alpha = 0.14f)),
+        ) {
+            // Same slot before and after the photos load, so nothing jumps.
+            if (photo != null) {
+                AssetPhoto(photo.path, photoPx, Modifier.matchParentSize(), targetHeightPx = (photoPx / 1.25f).toInt())
+            } else {
+                ExerciseIcon(ex, Modifier.align(Alignment.Center).fillMaxSize(0.7f))
             }
-            Spacer(Modifier.height(10.dp))
-            PrimaryButton("Start", onClick = { onStart(target, camera && exercise.trackable) })
+            if (ex.trackable) CameraBadge(Modifier.align(Alignment.TopStart).padding(6.dp))
+        }
+        Column(Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 6.dp)) {
+            Text(ex.title, style = MaterialTheme.typography.titleSmall, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Emoji(ex.category.art, 16.dp)
+                Spacer(Modifier.width(6.dp))
+                Text(ex.targetLabel(target), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1)
+            }
         }
     }
 }
 
+/** Solid chip over the photo: this move is counted and checked by the camera. */
 @Composable
-private fun StepButton(icon: Int, onClick: () -> Unit) {
-    Box(
-        Modifier.size(52.dp).clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceVariant).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) { Glyph(icon) }
+private fun CameraBadge(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier.background(colors.surfaceContainer, CircleShape).padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Glyph(R.drawable.ic_camera, size = 14, tint = colors.primary)
+        Spacer(Modifier.width(4.dp))
+        Text("Camera", style = MaterialTheme.typography.labelMedium, color = colors.onSurface)
+    }
+}
+
+/** Starts CameraX while a sheet is open, so the first preview comes up sooner. */
+@Composable
+internal fun WarmCamera(on: Boolean) {
+    val context = LocalContext.current
+    LaunchedEffect(on) { if (on) ProcessCameraProvider.getInstance(context.applicationContext) }
+}
+
+private fun Context.openPage(url: String) {
+    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } // no browser: nothing to do
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SetupSheet(
+    exercise: Exercise,
+    photo: Photo?,
+    onStart: (target: Int, camera: Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    vm: AppViewModel = viewModel(),
+) {
+    val colors = MaterialTheme.colorScheme
+    val hold = exercise.mode == Mode.HOLD
+    var target by rememberSaveable(exercise) { mutableIntStateOf(vm.lastTarget(exercise)) }
+    var camera by rememberSaveable(exercise) { mutableStateOf(exercise.trackable) }
+    var credit by rememberSaveable(exercise) { mutableStateOf(false) }
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val heroPx = with(density) { 360.dp.roundToPx() }
+    val heroHeightPx = with(density) { 200.dp.roundToPx() }
+    WarmCamera(camera && exercise.trackable)
+
+    NovaSheet(onDismiss, footer = { PrimaryButton("Start", onClick = { onStart(target, camera && exercise.trackable) }) }) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(Nova.colors.of(exercise.category).copy(alpha = 0.14f)),
+        ) {
+            if (photo != null) {
+                AssetPhoto(photo.path, heroPx, Modifier.matchParentSize(), targetHeightPx = heroHeightPx)
+            } else {
+                ExerciseIcon(exercise, Modifier.align(Alignment.Center).size(150.dp))
+            }
+            if (photo?.credit != null) {
+                IconCircleButton(
+                    R.drawable.ic_info, "Photo credit", { credit = !credit },
+                    container = colors.surfaceContainer,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                )
+            }
+        }
+        val page = photo?.page
+        if (credit && photo?.credit != null) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable(enabled = page != null) { page?.let(context::openPage) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(photo.credit, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, modifier = Modifier.weight(1f))
+                if (page != null) Glyph(R.drawable.ic_arrow_up_right, size = 16, tint = colors.onSurfaceVariant)
+            }
+        }
+        Column {
+            Text(exercise.title, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Emoji(exercise.category.art, 20.dp)
+                Spacer(Modifier.width(6.dp))
+                Text(exercise.muscles, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            exercise.cues.forEach { CueChip(it) }
+        }
+        Stepper(
+            value = target,
+            onChange = { target = it },
+            // Up from 19 goes to 20, down from 20 to 19: the step size is taken on the side being moved into.
+            step = if (hold) HoldStep else RepStep,
+            range = if (hold) 5..600 else 1..300,
+            unit = if (hold) null else "reps",
+            format = if (hold) ::clock else Int::toString,
+        )
+        Panel(padding = PaddingValues(vertical = 4.dp)) {
+            if (exercise.trackable) {
+                ToggleRow(
+                    R.drawable.ic_camera_duo, "Camera",
+                    subtitle = if (camera) exercise.cameraTip else "Off · half points",
+                    checked = camera,
+                    onCheckedChange = { camera = it },
+                )
+            } else {
+                ListRow("Count by hand", "Half points", leading = { IconTile(R.drawable.ic_hand_wave_duo, colors.onSurfaceVariant) })
+            }
+            ToggleRow(R.drawable.ic_speaker_duo, "Voice coach", checked = vm.voice, onCheckedChange = vm::changeVoice)
+        }
+    }
+}
+
+private val RepStep: (Int) -> Int = { if (it < 20) 1 else 5 }
+private val HoldStep: (Int) -> Int = { if (it < 60) 5 else 15 }
+
+@Composable
+private fun CueChip(text: String) {
+    Row(
+        Modifier.background(MaterialTheme.colorScheme.surfaceVariant, CircleShape).padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Glyph(R.drawable.ic_check, size = 16, tint = Nova.colors.good)
+        Spacer(Modifier.width(6.dp))
+        Text(text, style = MaterialTheme.typography.labelLarge)
+    }
 }

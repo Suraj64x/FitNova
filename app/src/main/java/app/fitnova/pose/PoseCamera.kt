@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.fitnova.ui.Nova
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseDetection
@@ -165,23 +166,28 @@ private class Throttled(private val inner: MlKitAnalyzer, private val gapMs: Lon
     override fun updateTransform(matrix: Matrix?) = inner.updateTransform(matrix)
 }
 
-/** Skeleton lines and joints. Reads [frame] and [color] while drawing, so new frames only redraw, never recompose. */
+private val JOINTS = LANDMARKS.values.toList()
+
+/**
+ * Skeleton: [Nova.Bone] lines with joints in the live status [color]. Reads [frame] and [color] while drawing,
+ * so new frames only redraw, and the loops index lists so a frame allocates nothing.
+ */
 @Composable
 fun SkeletonOverlay(frame: () -> Frame?, color: () -> Color, modifier: Modifier = Modifier) {
     Canvas(modifier) {
         val f = frame() ?: return@Canvas
-        val c = color()
+        val joint = color()
         val stroke = 4.dp.toPx()
-        val dot = 4.5.dp.toPx()
-        for ((a, b) in BONES) {
-            val pa = f.points[a]?.takeIf { it.p >= MIN_LIKELIHOOD } ?: continue
-            val pb = f.points[b]?.takeIf { it.p >= MIN_LIKELIHOOD } ?: continue
-            drawLine(c, Offset(pa.x, pa.y), Offset(pb.x, pb.y), strokeWidth = stroke, cap = StrokeCap.Round)
+        val dot = 3.dp.toPx()
+        for (i in BONES.indices) {
+            val bone = BONES[i]
+            val a = f.points[bone.first]?.takeIf { it.p >= MIN_LIKELIHOOD } ?: continue
+            val b = f.points[bone.second]?.takeIf { it.p >= MIN_LIKELIHOOD } ?: continue
+            drawLine(Nova.Bone, Offset(a.x, a.y), Offset(b.x, b.y), strokeWidth = stroke, cap = StrokeCap.Round)
         }
-        for (p in f.points.values) {
-            if (p.p < MIN_LIKELIHOOD) continue
-            drawCircle(Color.White, dot, Offset(p.x, p.y))
-            drawCircle(c, dot * 0.55f, Offset(p.x, p.y))
+        for (i in JOINTS.indices) {
+            val p = f.points[JOINTS[i]]?.takeIf { it.p >= MIN_LIKELIHOOD } ?: continue
+            drawCircle(joint, dot, Offset(p.x, p.y))
         }
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#0E0F11</color>
+    <color name="bg">#0B0C0F</color>
     <style name="Theme.FitNova" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/bg</item>
     </style>

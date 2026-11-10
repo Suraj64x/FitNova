@@ -1,0 +1,45 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="144dp"
+    android:height="144dp"
+    android:viewportWidth="144"
+    android:viewportHeight="144">
+  <path
+      android:pathData="M72,0L72,0A72,72 0,0 1,144 72L144,72A72,72 0,0 1,72 144L72,144A72,72 0,0 1,0 72L0,72A72,72 0,0 1,72 0z"
+      android:fillColor="#E9ECFF"/>
+  <path
+      android:pathData="M107,93V57H37v44h62a8,8 0,0 0,8 -8Z"
+      android:fillColor="#FFFFFF"/>
+  <path
+      android:pathData="M47,74v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2ZM47,88v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2ZM61,88v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2ZM75,88v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2ZM61,74v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2ZM75,74v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2ZM89,74v-4a2,2 0,0 1,2 -2h4a2,2 0,0 1,2 2v4a2,2 0,0 1,-2 2h-4a2,2 0,0 1,-2 -2Z"
+      android:strokeWidth="2"
+      android:strokeColor="#15171D"/>
+  <path
+      android:pathData="M37,45h70v12H37V45Z"
+      android:fillColor="#A4B1FF"/>
+  <path
+      android:pathData="M107,83v10a8,8 0,0 1,-8 8H37V57m70,17V57m0,0V45H37v12m70,0H37"
+      android:strokeWidth="2"
+      android:strokeColor="#15171D"
+      android:strokeLineCap="square"/>
+  <path
+      android:pathData="M55,50V40h5v10h-5ZM84,50V40h5v10h-5Z"
+      android:strokeWidth="2"
+      android:fillColor="#FFFFFF"
+      android:strokeColor="#15171D"/>
+  <path
+      android:pathData="M101,95m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0"
+      android:strokeWidth="2"
+      android:fillColor="#534EF5"
+      android:strokeColor="#15171D"
+      android:strokeLineCap="square"/>
+  <path
+      android:pathData="M95,95h6m6,0h-6m0,0v-6m0,6v6"
+      android:strokeWidth="2"
+      android:strokeColor="#15171D"
+      android:strokeLineCap="square"/>
+  <path
+      android:pathData="M101,117a21.99,21.99 0,0 0,15.56 -6.44A21.99,21.99 0,0 0,123 95"
+      android:strokeWidth="2"
+      android:strokeColor="#15171D"
+      android:strokeLineCap="square"/>
+</vector>

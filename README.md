@@ -10,6 +10,18 @@ A minimal, fast fitness app for Android. It runs well on low-end phones.
 - **Badges:** 12 achievements (streaks, reps, perfect form, early bird…) worked out from your history.
 - **Offline-first:** workouts save on the phone and sync to Supabase in the background.
 
+## Download
+
+Get the latest APK from [Releases](https://github.com/Suraj64x/FitNova/releases/latest):
+
+| File | For |
+|---|---|
+| `FitNova-1.4-arm64.apk` | Most phones (2017+) — recommended |
+| `FitNova-1.4-armv7.apk` | Older / low-end phones |
+| `FitNova-1.4-universal.apk` | Any phone, if unsure (bigger) |
+
+Requires Android 8.0+. Allow "install unknown apps" when prompted. Installs alongside the old Fit Nova app.
+
 ## Build
 
 Requirements: Android Studio 2026.2 or newer (JDK 17+), and Android SDK 37.
@@ -18,7 +30,7 @@ Requirements: Android Studio 2026.2 or newer (JDK 17+), and Android SDK 37.
 ./gradlew testDebugUnitTest assembleDebug
 ```
 
-The build produces one APK per CPU type (arm64-v8a, armeabi-v7a, x86_64), in `app/build/outputs/apk/`. Release builds are about 25–30 MB.
+The build produces one APK per CPU type (arm64-v8a, armeabi-v7a, x86_64) plus a universal APK, in `app/build/outputs/apk/`. Release builds are about 27–33 MB per CPU type.
 
 ## Backend (Supabase)
 

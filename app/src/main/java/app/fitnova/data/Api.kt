@@ -12,6 +12,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.time.Instant
 import java.time.OffsetDateTime
 
@@ -44,13 +45,14 @@ class Api(private val session: SessionStore) {
     private val key = BuildConfig.SUPABASE_KEY
     private val refreshLock = Mutex()
 
-    suspend fun login(username: String, password: String) {
+    // Login and register run on IO as a whole: accept() encrypts the tokens with the Keystore, which is slow on cheap phones.
+    suspend fun login(username: String, password: String) = withContext(Dispatchers.IO) {
         val body = JSONObject().put("action", "login").put("username", username).put("password", password)
         accept(JSONObject(call("POST", "/functions/v1/nova-auth", body.toString())), username)
     }
 
     /** Returns the one-time recovery code the server issues for new accounts (if any). */
-    suspend fun register(username: String, password: String): String? {
+    suspend fun register(username: String, password: String): String? = withContext(Dispatchers.IO) {
         val body = JSONObject()
             .put("action", "register")
             .put("username", username)
@@ -58,7 +60,7 @@ class Api(private val session: SessionStore) {
             .put("confirm_password", password)
         val json = JSONObject(call("POST", "/functions/v1/nova-auth", body.toString()))
         accept(json, username)
-        return json.optString("recovery_code").ifBlank { null }
+        json.optString("recovery_code").ifBlank { null }
     }
 
     suspend fun saveProfile(displayName: String) {
@@ -86,14 +88,15 @@ class Api(private val session: SessionStore) {
         authed("POST", "/rest/v1/fn_workouts?on_conflict=id", rows.toString(), UPSERT)
     }
 
-    suspend fun pullWorkouts(): List<Workout> {
+    /** Up to 1,000 rows, so the parse runs on IO too. */
+    suspend fun pullWorkouts(): List<Workout> = withContext(Dispatchers.IO) {
         val text = authed(
             "GET",
             "/rest/v1/fn_workouts?select=id,exercise,reps,seconds,form_score,tracked,started_at&order=started_at.desc&limit=1000",
             null,
         )
         val rows = JSONArray(text)
-        return (0 until rows.length()).mapNotNull { i ->
+        (0 until rows.length()).mapNotNull { i ->
             val o = rows.getJSONObject(i)
             val exercise = Exercise.of(o.getString("exercise")) ?: return@mapNotNull null
             Workout(
@@ -107,6 +110,11 @@ class Api(private val session: SessionStore) {
                 synced = true,
             )
         }
+    }
+
+    /** Row-level security limits this to the caller's own rows. */
+    suspend fun deleteWorkout(id: String) {
+        authed("DELETE", "/rest/v1/fn_workouts?id=eq.${URLEncoder.encode(id, "UTF-8")}", null)
     }
 
     suspend fun leaderboard(period: String, zone: String): List<Rank> =
@@ -165,10 +173,10 @@ class Api(private val session: SessionStore) {
         session.save(user.getString("id"), username, json.getString("access_token"), json.getString("refresh_token"))
     }
 
-    /** Authenticated call; on an expired token, refreshes once and retries. */
-    private suspend fun authed(method: String, path: String, body: String?, prefer: String? = null): String {
+    /** Authenticated call; on an expired token, refreshes once and retries. On IO: reading the token decrypts it. */
+    private suspend fun authed(method: String, path: String, body: String?, prefer: String? = null): String = withContext(Dispatchers.IO) {
         val token = session.accessToken ?: throw ApiException(401, "Sign in to sync")
-        return try {
+        try {
             call(method, path, body, token, prefer)
         } catch (e: ApiException) {
             if (e.code != 401) throw e

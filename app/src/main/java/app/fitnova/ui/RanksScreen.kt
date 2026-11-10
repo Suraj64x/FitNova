@@ -55,7 +55,6 @@ import app.fitnova.AppViewModel
 import app.fitnova.Graph
 import app.fitnova.Period
 import app.fitnova.R
-import app.fitnova.Tab
 import app.fitnova.data.Rank
 
 private val Medals = listOf(Color(0xFFD4A72C), Color(0xFF9AA3AD), Color(0xFFB87333))
@@ -99,7 +98,7 @@ fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
             item {
                 Panel {
                     EmptyNote("Sign in to compete", figure = app.fitnova.domain.Exercise.HIGH_KNEES)
-                    PrimaryButton("Sign in", onClick = { vm.tab = Tab.PROFILE })
+                    PrimaryButton("Sign in", onClick = vm::openProfile)
                 }
             }
             return@LazyColumn

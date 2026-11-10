@@ -7,6 +7,7 @@ lifecycle = "2.11.0"
 camerax = "1.6.2"
 mlkitPose = "18.0.0-beta5"
 coroutines = "1.10.2"
+profileinstaller = "1.4.1"
 junit = "4.13.2"
 
 [libraries]
@@ -25,6 +26,7 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 androidx-camera-mlkit-vision = { group = "androidx.camera", name = "camera-mlkit-vision", version.ref = "camerax" }
 mlkit-pose = { group = "com.google.mlkit", name = "pose-detection", version.ref = "mlkitPose" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]

@@ -1,16 +1,16 @@
 package app.fitnova.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -35,12 +34,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.SaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.fitnova.AppViewModel
 import app.fitnova.R
+import app.fitnova.Screen
 import app.fitnova.Tab
 import app.fitnova.WorkoutFlow
 
@@ -50,8 +52,8 @@ private val TABS = listOf(
     TabItem(Tab.HOME, "Home", R.drawable.ic_home),
     TabItem(Tab.TRAIN, "Train", R.drawable.ic_train),
     TabItem(Tab.FOOD, "Food", R.drawable.ic_food),
+    TabItem(Tab.SLEEP, "Sleep", R.drawable.ic_flame), // placeholder until the moon icon lands
     TabItem(Tab.RANKS, "Ranks", R.drawable.ic_ranks),
-    TabItem(Tab.PROFILE, "Profile", R.drawable.ic_profile),
 )
 
 @Composable
@@ -67,13 +69,25 @@ fun AppRoot(vm: AppViewModel) {
             snackbar.showSnackbar(it)
         }
     }
+    // Outlives the tabs, so each tab keeps its scroll and filters while a page or a workout covers it.
+    val tabState = rememberSaveableStateHolder()
 
     Box(Modifier.fillMaxSize()) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            when (val flow = vm.flow) {
-                is WorkoutFlow.Live -> SessionScreen(flow, vm::finish)
-                is WorkoutFlow.Done -> SummaryScreen(flow.workout, onSave = { vm.save(flow.workout) }, onDiscard = vm::discard)
-                null -> Tabs(vm)
+            val flow = vm.flow
+            val screen = vm.screen
+            when {
+                flow is WorkoutFlow.Live -> SessionScreen(flow, vm::finish)
+                flow is WorkoutFlow.Done -> SummaryScreen(flow.workout, onSave = { vm.save(flow.workout) }, onDiscard = vm::discard)
+                !vm.onboarded -> OnboardingScreen(vm)
+                screen != null -> {
+                    BackHandler(onBack = vm::closeScreen)
+                    when (screen) {
+                        Screen.PROFILE -> ProfileScreen(vm)
+                        Screen.HISTORY -> HistoryScreen(vm)
+                    }
+                }
+                else -> Tabs(vm, tabState)
             }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 80.dp)) { data ->
@@ -85,27 +99,28 @@ fun AppRoot(vm: AppViewModel) {
         }
     }
 
-    // Pop-ups live here so any tab can open them.
+    // Pop-ups live here so any tab or page can open them.
     vm.setup?.let { ex -> SetupSheet(ex, vm.exercisePhotos[ex.id], onStart = { target, camera -> vm.start(ex, target, camera) }, onDismiss = { vm.setup = null }) }
     vm.recipe?.let { r -> RecipeSheet(r, onLog = { vm.logRecipe(r) }, onDismiss = { vm.recipe = null }) }
     if (vm.editingBody) BodySheet(vm.body, onSave = vm::saveBody, onDismiss = { vm.editingBody = false })
 }
 
 @Composable
-private fun Tabs(vm: AppViewModel) {
+private fun Tabs(vm: AppViewModel, state: SaveableStateHolder) {
     BackHandler(enabled = vm.tab != Tab.HOME) { vm.tab = Tab.HOME }
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent, // AppRoot's Surface already paints the background
         bottomBar = { BottomBar(vm.tab) { vm.tab = it } },
     ) { padding ->
         Box {
-            Crossfade(vm.tab, animationSpec = tween(160), label = "tab") { tab ->
-                when (tab) {
+            // Instant swap: a Crossfade composes and draws two whole screens through every transition.
+            state.SaveableStateProvider(vm.tab) {
+                when (vm.tab) {
                     Tab.HOME -> HomeScreen(vm, padding)
                     Tab.TRAIN -> TrainScreen(vm, padding)
                     Tab.FOOD -> FoodScreen(vm, padding)
+                    Tab.SLEEP -> SleepScreen(vm, padding)
                     Tab.RANKS -> RanksScreen(vm, padding)
-                    Tab.PROFILE -> ProfileScreen(vm, padding)
                 }
             }
             // Solid strip behind the status bar so scrolled content never runs under the clock.
@@ -124,11 +139,15 @@ private fun BottomBar(selected: Tab, onSelect: (Tab) -> Unit) {
         color = colors.surfaceContainer,
         border = BorderStroke(1.dp, colors.outlineVariant),
     ) {
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(72.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth().navigationBarsPadding().height(72.dp).padding(horizontal = 6.dp).selectableGroup(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             TABS.forEach { item ->
                 val on = item.tab == selected
                 Column(
-                    Modifier.weight(1f).fillMaxSize().clip(MaterialTheme.shapes.large).clickable { onSelect(item.tab) },
+                    Modifier.weight(1f).fillMaxSize().clip(MaterialTheme.shapes.large)
+                        .selectable(selected = on, role = Role.Tab, onClick = { onSelect(item.tab) }),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {

@@ -14,8 +14,8 @@ android {
         applicationId = "app.fitnova"
         minSdk = 26
         targetSdk = 37
-        versionCode = 14
-        versionName = "1.4"
+        versionCode = 15
+        versionName = "1.5"
 
         // Publishable (client-side) key from the existing Fit Nova Supabase project.
         buildConfigField("String", "SUPABASE_URL", "\"https://intwuixajqddizrdzbce.supabase.co\"")
@@ -40,6 +40,11 @@ android {
             include("arm64-v8a", "armeabi-v7a", "x86_64")
             isUniversalApk = true
         }
+    }
+
+    // The app is English only, so library translations are dead weight in resources.arsc.
+    androidResources {
+        localeFilters += listOf("en")
     }
 
     compileOptions {
@@ -71,5 +76,7 @@ dependencies {
     implementation(libs.androidx.camera.mlkit.vision)
     implementation(libs.mlkit.pose)
     implementation(libs.kotlinx.coroutines.android)
+    // Installs src/main/baseline-prof.txt on sideloaded APKs too, so app code is AOT-compiled.
+    implementation(libs.androidx.profileinstaller)
     testImplementation(libs.junit)
 }

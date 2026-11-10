@@ -17,13 +17,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,6 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -46,12 +52,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fitnova.AppViewModel
+import app.fitnova.BuildConfig
 import app.fitnova.R
 import app.fitnova.ThemeMode
 import app.fitnova.data.SyncState
 
+/** Full-screen page over the tabs; back closes it. */
 @Composable
-fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
+fun ProfileScreen(vm: AppViewModel) {
     val stats by vm.stats.collectAsStateWithLifecycle()
     val badges by vm.badges.collectAsStateWithLifecycle()
     val workouts by vm.workouts.collectAsStateWithLifecycle()
@@ -61,11 +69,18 @@ fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
 
     Column(
         Modifier
+            .statusBarsPadding() // outside the scroll, so content never slides under the clock
             .verticalScroll(rememberScrollState())
-            .padding(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding() + 16.dp, bottom = padding.calculateBottomPadding() + 24.dp),
+            .navigationBarsPadding()
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("Profile", style = MaterialTheme.typography.headlineMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = vm::closeScreen, modifier = Modifier.padding(end = 4.dp)) {
+                Icon(painterResource(R.drawable.ic_chevron), contentDescription = "Back", modifier = Modifier.size(22.dp).rotate(180f))
+            }
+            Text("Profile", style = MaterialTheme.typography.headlineMedium)
+        }
         ProfileCard(name ?: "Guest", stats)
         if (name == null) {
             Panel { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { AuthForm(vm) } }
@@ -114,7 +129,7 @@ fun ProfileScreen(vm: AppViewModel, padding: PaddingValues) {
             }
         }
         Text(
-            "Fit Nova 1.4",
+            "Fit Nova ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

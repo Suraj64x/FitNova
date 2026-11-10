@@ -7,6 +7,7 @@ import android.app.job.JobService
 import android.content.ComponentName
 import android.content.Context
 import app.fitnova.Graph
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 sealed interface SyncState {
     data object Idle : SyncState
@@ -29,27 +31,41 @@ class Sync(private val store: WorkoutStore, private val api: Api, private val se
     val state = _state.asStateFlow()
     private val lock = Mutex()
 
-    /** Uploads pending workouts, then pulls the account's history. Returns false when it should be retried later. */
-    suspend fun run(): Boolean = lock.withLock {
+    /**
+     * Uploads pending workouts, then pulls the account's history. Returns false when it should be retried later.
+     * Runs on IO (JSON, Keystore and disk work) and never throws, except to cancel.
+     */
+    suspend fun run(): Boolean = withContext(Dispatchers.IO) { lock.withLock { runLocked() } }
+
+    private suspend fun runLocked(): Boolean {
         if (!session.signedIn) {
             _state.value = SyncState.Idle
             return true
         }
         _state.value = SyncState.Running
-        try {
-            store.load() // the process may have been started just for this job
+        return try {
+            if (store.all.value.isEmpty()) store.load() // the process may have been started just for this job
             val pending = store.pending()
             if (pending.isNotEmpty()) {
                 api.pushWorkouts(pending)
                 store.markSynced(pending.map { it.id })
             }
-            store.save(api.pullWorkouts())
+            // Write only new or changed rows: rewriting the whole history every time is slow on cheap storage.
+            val known = store.all.value.associateBy { it.id }
+            store.save(api.pullWorkouts().filter { known[it.id] != it })
             _state.value = SyncState.Done(System.currentTimeMillis())
             true
+        } catch (e: CancellationException) {
+            _state.value = SyncState.Idle
+            throw e
         } catch (e: ApiException) {
             _state.value = SyncState.Failed(e.message ?: "Sync failed", offline = e.code == 0)
             // Retry only what time can fix: no network or a server error. 4xx needs the user.
             !(e.code == 0 || e.code >= 500)
+        } catch (e: Exception) {
+            // A malformed response or a disk error: retrying in the background won't fix it; the next resume tries again.
+            _state.value = SyncState.Failed("Sync failed", offline = false)
+            true
         }
     }
 }

@@ -5,8 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.fitnova.alarm.Reminders
 import app.fitnova.data.ApiException
 import app.fitnova.data.Group
 import app.fitnova.data.Rank
@@ -15,6 +17,7 @@ import app.fitnova.data.SyncState
 import app.fitnova.data.loadExercisePhotos
 import app.fitnova.data.loadRecipes
 import app.fitnova.domain.Activity
+import app.fitnova.domain.Alarm
 import app.fitnova.domain.badges
 import app.fitnova.domain.Body
 import app.fitnova.domain.Exercise
@@ -23,22 +26,35 @@ import app.fitnova.domain.Meal
 import app.fitnova.domain.Photo
 import app.fitnova.domain.Recipe
 import app.fitnova.domain.Sex
+import app.fitnova.domain.SleepEntry
+import app.fitnova.domain.SleepStats
 import app.fitnova.domain.Workout
+import app.fitnova.domain.sleepStats
 import app.fitnova.domain.stats
 import app.fitnova.domain.targets
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.Duration
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.UUID
 
-enum class Tab { HOME, TRAIN, FOOD, RANKS, PROFILE }
+enum class Tab { HOME, TRAIN, FOOD, SLEEP, RANKS }
+
+/** Full-screen pages that cover the tabs. */
+enum class Screen { PROFILE, HISTORY }
 
 enum class Period(val id: String, val label: String) { WEEK("week", "Week"), MONTH("month", "Month"), ALL("all", "All time") }
 
@@ -71,6 +87,12 @@ data class AuthState(val busy: Boolean = false, val error: String? = null, val r
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     var tab by mutableStateOf(Tab.HOME)
+    var screen by mutableStateOf<Screen?>(null)
+        private set
+
+    /** The day History opens on; null = today / the latest. */
+    var historyDay by mutableStateOf<LocalDate?>(null)
+        private set
     var flow by mutableStateOf<WorkoutFlow?>(null)
         private set
 
@@ -79,13 +101,24 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var recipe by mutableStateOf<Recipe?>(null)
     var editingBody by mutableStateOf(false)
 
+    private val _today = MutableStateFlow(LocalDate.now())
+
+    /** The current date. Moves on at midnight and on every resume, so day-based numbers never go stale. */
+    val today: StateFlow<LocalDate> = _today.asStateFlow()
+
     val workouts = Graph.store.all
-    val stats = workouts.map { stats(it) }.flowOn(Dispatchers.Default)
+
+    // Worked out off the main thread, once per change of the history or the date.
+    val stats = combine(workouts, today) { w, d -> stats(w, d) }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.Eagerly, stats(emptyList()))
+    val badges = combine(workouts, today) { w, _ -> badges(w) }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, badges(emptyList()))
     val sync = Graph.sync.state
     val meals = Graph.meals.today
-    val badges = workouts.map { badges(it) }.flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, badges(emptyList()))
+
+    /** False until the workout history has loaded once, so screens can show a placeholder instead of an empty state. */
+    var loaded by mutableStateOf(false)
+        private set
 
     var scope by mutableStateOf(Scope.GLOBAL)
     var groups by mutableStateOf(GroupsState())
@@ -106,10 +139,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     /** Glasses of water today (goal 8), kept per day in prefs. */
-    var water by mutableIntStateOf(Graph.prefs.getInt(waterKey(), 0))
+    var water by mutableIntStateOf(Graph.prefs.getInt(waterKey(LocalDate.now()), 0))
         private set
 
-    var username by mutableStateOf(Graph.session.username)
+    var username by mutableStateOf(Graph.session.username.value)
         private set
     var board by mutableStateOf(BoardState())
         private set
@@ -120,6 +153,32 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     )
         private set
 
+    /** First-run flag. People upgrading from 1.4 have no flag yet, so any saved setting or an account counts as done. */
+    var onboarded by mutableStateOf(Graph.prefs.getBoolean("onboarded", Graph.prefs.all.isNotEmpty() || Graph.session.signedIn))
+        private set
+
+    /** Voice coach during workouts. */
+    var voice by mutableStateOf(Graph.prefs.getBoolean("voice", true))
+        private set
+
+    /** Daily workout reminder as minute of day; null = off. */
+    var reminder by mutableStateOf(Graph.prefs.getInt("reminder_min", -1).takeIf { it >= 0 })
+        private set
+
+    /** Sleep goal in minutes. */
+    var sleepGoal by mutableIntStateOf(Graph.prefs.getInt("sleep_goal_min", 480))
+        private set
+
+    /** Logged sleeps, newest first. */
+    val sleep: StateFlow<List<SleepEntry>> = Graph.sleep.entries
+
+    /** When "Going to bed" was tapped (epoch ms); null while awake. */
+    val bedtime: StateFlow<Long?> = Graph.sleep.bedtime
+    val alarms: StateFlow<List<Alarm>> = Graph.alarms.items
+    val sleepStats: StateFlow<SleepStats> = combine(sleep, today, snapshotFlow { sleepGoal }) { e, d, goal -> sleepStats(e, goal, d) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, sleepStats(emptyList(), sleepGoal, today.value))
+
     /** Short confirmations shown in a snackbar ("Saved · +12 pts"). */
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val messages = _messages.asSharedFlow()
@@ -127,21 +186,71 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val boardCache = mutableMapOf<Period, List<Rank>>()
 
     init {
+        // History first: it decides between the loading state and the real screens. Other loads run alongside.
         viewModelScope.launch {
             Graph.store.load()
-            Graph.meals.load()
-            recipes = loadRecipes(getApplication())
-            exercisePhotos = loadExercisePhotos(getApplication())
+            loaded = true
+            launch { Graph.sleep.load() }
+            launch { Graph.alarms.load() }
+            // Day-based state follows the date: water and today's meals reload when it changes.
+            today.collect { day ->
+                water = Graph.prefs.getInt(waterKey(day), 0)
+                Graph.meals.load(day)
+            }
+        }
+        viewModelScope.launch { exercisePhotos = loadExercisePhotos(getApplication()) }
+        viewModelScope.launch { recipes = loadRecipes(getApplication()) }
+        viewModelScope.launch {
+            // Sign-out and an expired session (refresh rejected) both end up here.
+            Graph.session.username.collect { name ->
+                username = name
+                if (name == null) {
+                    board = BoardState()
+                    boardCache.clear()
+                    groups = GroupsState()
+                    openGroup = null
+                }
+            }
+        }
+        viewModelScope.launch {
+            while (true) {
+                val now = ZonedDateTime.now()
+                delay(Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay(now.zone)).toMillis())
+                _today.value = LocalDate.now()
+            }
         }
     }
 
-    /** Called on every app resume: refresh today's food log and sync only when needed. */
+    /** Called on every app resume: catch up with the date, and sync only when there is something to do. */
     fun onResume() {
-        viewModelScope.launch { Graph.meals.load() }
-        water = Graph.prefs.getInt(waterKey(), 0)
+        _today.value = LocalDate.now()
         val last = (sync.value as? SyncState.Done)?.at ?: 0L
-        if (Graph.store.pending().isNotEmpty() || System.currentTimeMillis() - last > 2 * 60_000) syncNow()
+        // A full pull is heavy on slow networks: only for waiting uploads or when the last one is 15+ minutes old.
+        if (Graph.store.pending().isNotEmpty() || System.currentTimeMillis() - last > 15 * 60_000) syncNow()
     }
+
+    // --- Navigation ---
+
+    fun openProfile() {
+        screen = Screen.PROFILE
+    }
+
+    fun openHistory(day: LocalDate? = null) {
+        historyDay = day
+        screen = Screen.HISTORY
+    }
+
+    fun closeScreen() {
+        screen = null
+    }
+
+    fun finishOnboarding(goal: Int?) {
+        goal?.let(::changeDailyGoal)
+        onboarded = true
+        Graph.prefs.edit().putBoolean("onboarded", true).apply()
+    }
+
+    // --- Workouts ---
 
     fun start(exercise: Exercise, target: Int, camera: Boolean) {
         setup = null
@@ -157,11 +266,31 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         flow = null
         tab = Tab.HOME
         viewModelScope.launch {
-            val before = badges(workouts.value).filter { it.earned }.map { it.id }.toSet()
+            val before = badges.value.filter { it.earned }.map { it.id }.toSet()
             Graph.store.save(listOf(workout))
             _messages.emit("Workout saved · +${workout.points} pts")
-            badges(workouts.value).firstOrNull { it.earned && it.id !in before }?.let { _messages.emit("${it.emoji} New badge: ${it.title}") }
+            withContext(Dispatchers.Default) { badges(workouts.value) }
+                .firstOrNull { it.earned && it.id !in before }
+                ?.let { _messages.emit("${it.emoji} New badge: ${it.title}") }
             syncNow()
+        }
+    }
+
+    /** Deletes a workout. One already in the cloud is deleted there first, or the next pull would bring it back. */
+    fun deleteWorkout(w: Workout) {
+        viewModelScope.launch {
+            // Re-read: it may have been uploaded since the list was drawn.
+            // ponytail: a delete racing an in-flight upload can return on the next pull; keep tombstones if that shows up.
+            val synced = Graph.store.all.value.firstOrNull { it.id == w.id }?.synced ?: return@launch
+            if (synced) {
+                try {
+                    Graph.api.deleteWorkout(w.id)
+                } catch (e: Exception) {
+                    _messages.emit("Can't delete while offline")
+                    return@launch
+                }
+            }
+            Graph.store.delete(w.id)
         }
     }
 
@@ -173,8 +302,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             groups = try {
                 GroupsState(mine = Graph.api.myGroups(), communities = Graph.api.communities())
-            } catch (e: ApiException) {
-                groups.copy(loading = false, error = e.message)
+            } catch (e: Exception) {
+                groups.copy(loading = false, error = e.userMessage())
             }
         }
     }
@@ -195,8 +324,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val next = try {
                 groupBoard.copy(rows = Graph.api.groupLeaderboard(g.id, period.id, ZoneId.systemDefault().id), loading = false, updatedAt = System.currentTimeMillis())
-            } catch (e: ApiException) {
-                groupBoard.copy(loading = false, error = e.message)
+            } catch (e: Exception) {
+                groupBoard.copy(loading = false, error = e.userMessage())
             }
             if (openGroup?.id == g.id && groupBoard.period == period) groupBoard = next
         }
@@ -230,8 +359,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             try {
                 block()
-            } catch (e: ApiException) {
-                _messages.emit(e.message ?: "Something went wrong")
+            } catch (e: Exception) {
+                _messages.emit(e.userMessage())
             }
             loadGroups()
         }
@@ -256,15 +385,40 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun addWater(delta: Int) {
-        water = (water + delta).coerceIn(0, 20)
-        Graph.prefs.edit().putInt(waterKey(), water).apply()
+        // Always the real current day, even if the screen still shows yesterday's count.
+        val key = waterKey(LocalDate.now())
+        water = (Graph.prefs.getInt(key, 0) + delta).coerceIn(0, 20)
+        Graph.prefs.edit().putInt(key, water).apply()
     }
 
-    private fun waterKey() = "water_${LocalDate.now()}"
+    private fun waterKey(day: LocalDate) = "water_$day"
+
+    // --- Settings ---
 
     fun changeDailyGoal(points: Int) {
         dailyGoal = points
         Graph.prefs.edit().putInt("daily_goal", points).apply()
+    }
+
+    fun changeVoice(on: Boolean) {
+        voice = on
+        Graph.prefs.edit().putBoolean("voice", on).apply()
+    }
+
+    fun changeReminder(minuteOfDay: Int?) {
+        reminder = minuteOfDay
+        Graph.prefs.edit().putInt("reminder_min", minuteOfDay ?: -1).apply()
+        Reminders.schedule(getApplication(), minuteOfDay)
+    }
+
+    fun changeSleepGoal(minutes: Int) {
+        sleepGoal = minutes
+        Graph.prefs.edit().putInt("sleep_goal_min", minutes).apply()
+    }
+
+    fun changeTheme(mode: ThemeMode) {
+        theme = mode
+        Graph.prefs.edit().putString("theme", mode.name).apply()
     }
 
     // --- Nutrition ---
@@ -307,8 +461,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 val rows = Graph.api.leaderboard(period.id, ZoneId.systemDefault().id)
                 boardCache[period] = rows
                 board.copy(rows = rows, loading = false, updatedAt = System.currentTimeMillis())
-            } catch (e: ApiException) {
-                board.copy(loading = false, error = e.message)
+            } catch (e: Exception) {
+                board.copy(loading = false, error = e.userMessage())
             }
             if (board.period == period) board = next // ignore late answers after switching tabs
         }
@@ -320,14 +474,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             auth = try {
                 val code = if (create) Graph.api.register(name, password) else Graph.api.login(name, password).let { null }
-                this@AppViewModel.username = Graph.session.username
+                this@AppViewModel.username = Graph.session.username.value
                 runCatching { Graph.api.saveProfile(name) } // leaderboard display name; non-fatal
                 syncNow()
                 loadBoard()
                 _messages.emit("Signed in as $name")
                 AuthState(recoveryCode = code)
-            } catch (e: ApiException) {
-                AuthState(error = e.message)
+            } catch (e: Exception) {
+                AuthState(error = e.userMessage())
             }
         }
     }
@@ -338,19 +492,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun signOut() {
         viewModelScope.launch {
-            Graph.session.clear()
+            Graph.session.clear() // the session collector in init resets the account state
             Graph.store.clearSynced()
-            username = null
-            board = BoardState()
-            boardCache.clear()
-            groups = GroupsState()
-            openGroup = null
             auth = AuthState()
         }
     }
 
-    fun changeTheme(mode: ThemeMode) {
-        theme = mode
-        Graph.prefs.edit().putString("theme", mode.name).apply()
-    }
+    /** Text for a failed request; anything but an [ApiException] is a malformed response or a bug, not something to show raw. */
+    private fun Exception.userMessage() = (this as? ApiException)?.message ?: "Something went wrong"
 }

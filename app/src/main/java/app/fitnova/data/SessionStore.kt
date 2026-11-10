@@ -4,6 +4,9 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -18,8 +21,12 @@ class SessionStore(context: Context) {
     private var cachedAccess: String? = null
     private var cachedRefresh: String? = null
 
+    private val _username = MutableStateFlow(prefs.getString("username", null))
+
+    /** Who is signed in. Turns null on sign-out and when the session expires (token refresh rejected). */
+    val username: StateFlow<String?> = _username.asStateFlow()
+
     val userId: String? get() = prefs.getString("user_id", null)
-    val username: String? get() = prefs.getString("username", null)
     val signedIn: Boolean get() = userId != null
 
     val accessToken: String?
@@ -36,6 +43,7 @@ class SessionStore(context: Context) {
             .putString("access", encrypt(access))
             .putString("refresh", encrypt(refresh))
             .apply()
+        _username.value = username
     }
 
     fun updateTokens(access: String, refresh: String) {
@@ -48,6 +56,7 @@ class SessionStore(context: Context) {
         cachedAccess = null
         cachedRefresh = null
         prefs.edit().clear().apply()
+        _username.value = null
     }
 
     private fun key(): SecretKey {

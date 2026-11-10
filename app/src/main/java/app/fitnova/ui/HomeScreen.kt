@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fitnova.AppViewModel
+import app.fitnova.R
 import app.fitnova.Tab
 import app.fitnova.data.SyncState
 import app.fitnova.domain.Exercise
@@ -78,6 +82,7 @@ fun HomeScreen(vm: AppViewModel, padding: PaddingValues) {
                     Text(greeting(vm.username), style = MaterialTheme.typography.headlineMedium, maxLines = 2)
                 }
                 SyncBadge(sync, pending, signedIn = vm.username != null, onClick = { vm.syncNow(manual = true) })
+                IconButton(onClick = vm::openProfile) { Icon(painterResource(R.drawable.ic_profile), contentDescription = "Profile") }
             }
         }
         item { TodayCard(stats, vm.dailyGoal, vm.water, meals.intake().kcal, vm.targets?.kcal, onWater = { vm.addWater(1) }) }

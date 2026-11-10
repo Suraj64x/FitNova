@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 // ponytail: plain SQLite instead of Room (no annotation processing, smaller build). Move to Room once
-// the schema needs real migrations (M2 groups / M3 alarms, sleep).
-class Db(context: Context) : SQLiteOpenHelper(context.applicationContext, "fitnova.db", null, 2) {
+// the schema needs real migrations (changed columns, not just new tables).
+class Db(context: Context) : SQLiteOpenHelper(context.applicationContext, "fitnova.db", null, 3) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """CREATE TABLE workouts (
@@ -30,10 +30,12 @@ class Db(context: Context) : SQLiteOpenHelper(context.applicationContext, "fitno
         )
         db.execSQL("CREATE INDEX workouts_started ON workouts(started_at)")
         createMeals(db)
+        createSleepTables(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createMeals(db)
+        if (oldVersion < 3) createSleepTables(db)
     }
 
     private fun createMeals(db: SQLiteDatabase) {
@@ -104,6 +106,12 @@ class WorkoutStore(private val db: Db) {
                 w.endTransaction()
             }
         }
+        load()
+    }
+
+    /** Local delete only; a synced row must be deleted on the server first or the next pull brings it back. */
+    suspend fun delete(id: String) {
+        withContext(Dispatchers.IO) { db.writableDatabase.delete("workouts", "id = ?", arrayOf(id)) }
         load()
     }
 

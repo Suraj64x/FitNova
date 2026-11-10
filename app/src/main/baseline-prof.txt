@@ -1,0 +1,5 @@
+# Fit Nova: AOT-compile all app code and preload app classes
+HSPLapp/fitnova/**->**(**)**
+Lapp/fitnova/**;
+# CameraX ships no profile: compile it for a faster camera start, without preloading its classes
+HSPLandroidx/camera/**->**(**)**

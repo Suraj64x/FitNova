@@ -1,5 +1,6 @@
 package app.fitnova
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
         val systemDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         val dark = vm.theme == ThemeMode.DARK || (vm.theme == ThemeMode.SYSTEM && systemDark)
         window.setBackgroundDrawable(ColorDrawable(if (dark) 0xFF0B0C0F.toInt() else 0xFFF5F6F8.toInt()))
+        route(intent)
         setContent {
             val inAppDark = isDark(vm.theme)
             // Keep status/navigation bar icons readable when the in-app theme differs from the system one.
@@ -35,5 +37,22 @@ class MainActivity : ComponentActivity() {
             }
             FitNovaTheme(inAppDark) { AppRoot(vm) }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        route(intent)
+    }
+
+    /** Notification taps (alarm, reminder) say which tab to show through the "open" extra. */
+    private fun route(intent: Intent?) {
+        val tab = when (intent?.getStringExtra("open")) {
+            "sleep" -> Tab.SLEEP
+            "train" -> Tab.TRAIN
+            else -> return
+        }
+        intent.removeExtra("open")
+        vm.closeScreen()
+        vm.tab = tab
     }
 }

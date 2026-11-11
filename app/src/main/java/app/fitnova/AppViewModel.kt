@@ -134,7 +134,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     // Worked out off the main thread, once per change of the history or the date.
     val stats = combine(workouts, today) { w, d -> stats(w, d) }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.Eagerly, stats(emptyList()))
-    val badges = combine(workouts, today) { w, _ -> badges(w) }.flowOn(Dispatchers.Default)
+    // Badges reuse the stats pass above instead of running their own (the expensive part of both).
+    val badges = combine(workouts, stats) { w, s -> badges(w, s = s) }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.Eagerly, badges(emptyList()))
     val sync = Graph.sync.state
     val meals = Graph.meals.today
@@ -421,41 +422,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 groupBoard.copy(loading = false, error = e.userMessage())
             }
             if (openGroup?.id == g.id && groupBoard.period == period) groupBoard = next
-        }
-    }
-
-    fun createGroup(name: String, community: Boolean, emoji: String) = groupAction {
-        val g = Graph.api.createGroup(name.trim(), if (community) "community" else "group", emoji)
-        _messages.emit("${g.emoji} ${g.name} created")
-        openGroup(g)
-    }
-
-    fun joinGroup(code: String) = groupAction {
-        val g = Graph.api.joinGroup(code)
-        _messages.emit("${g.emoji} Joined ${g.name}")
-        openGroup(g)
-    }
-
-    fun joinCommunity(g: Group) = groupAction {
-        Graph.api.joinCommunity(g.id)
-        _messages.emit("${g.emoji} Joined ${g.name}")
-    }
-
-    fun leaveGroup(g: Group) = groupAction {
-        Graph.api.leaveGroup(g.id)
-        openGroup = null
-        _messages.emit("Left ${g.name}")
-    }
-
-    /** Runs a group change, reports errors as a message, then refreshes the lists. */
-    private fun groupAction(block: suspend () -> Unit) {
-        viewModelScope.launch {
-            try {
-                block()
-            } catch (e: Exception) {
-                _messages.emit(e.userMessage())
-            }
-            loadGroups()
         }
     }
 

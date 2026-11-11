@@ -2,9 +2,40 @@ package app.fitnova.domain
 
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+
+/** Sleeps shorter or longer than this are mistakes (a stray tap, a forgotten "I'm awake"), not nights. */
+const val MIN_SLEEP_MINUTES = 15
+const val MAX_SLEEP_MINUTES = 16 * 60
+
+/** "7h 05m", or "45m" under an hour. */
+fun hm(minutes: Int): String =
+    if (minutes < 60) "${minutes}m" else "${minutes / 60}h ${(minutes % 60).toString().padStart(2, '0')}m"
+
+/**
+ * Epoch ms of a night entered as clock times, ending on [wakeDate]. A bedtime at or after the wake time on the
+ * clock means the evening before (23:30 → 07:00); an earlier one is the same day (01:00 → 09:00, naps).
+ */
+fun manualEntry(wakeDate: LocalDate, bed: LocalTime, wake: LocalTime, zone: ZoneId = ZoneId.systemDefault()): Pair<Long, Long> {
+    val bedDate = if (bed >= wake) wakeDate.minusDays(1) else wakeDate
+    return ZonedDateTime.of(bedDate, bed, zone).toInstant().toEpochMilli() to ZonedDateTime.of(wakeDate, wake, zone).toInstant().toEpochMilli()
+}
+
+/** Why a night from [bedAt] to [wakeAt] can't be saved next to [others] (itself excluded by [id]); null when it can. */
+fun sleepProblem(bedAt: Long, wakeAt: Long, now: Long, others: List<SleepEntry>, id: String? = null): String? {
+    val minutes = (wakeAt - bedAt) / 60_000
+    return when {
+        wakeAt > now + 5 * 60_000 -> "Wake time is in the future"
+        minutes < MIN_SLEEP_MINUTES -> "Shorter than $MIN_SLEEP_MINUTES min"
+        minutes > MAX_SLEEP_MINUTES -> "Longer than ${MAX_SLEEP_MINUTES / 60} h"
+        others.any { it.id != id && it.bedAt < wakeAt && it.wakeAt > bedAt } -> "Overlaps another night"
+        else -> null
+    }
+}
 
 /**
  * One sleep, from going to bed to waking up (epoch ms). Storing instants makes a night that crosses midnight

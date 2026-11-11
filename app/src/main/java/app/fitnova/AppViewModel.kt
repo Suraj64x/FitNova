@@ -700,6 +700,78 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             changeReminder(null)
         }
     }
+    // endregion
+
+    // region sleep
+
+    init {
+        armOnLaunch()
+    }
+
+    // (Inside functions `app` is the package, not the constructor parameter, so these names resolve.)
+    private fun armOnLaunch() {
+        val context = getApplication<Application>()
+        // Force-stop and OEM "cleaners" delete alarms and the reminder; every launch arms them again.
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { app.fitnova.alarm.AlarmScheduler.rearmAll(context) }
+            runCatching { Reminders.rearm(context) }
+        }
+        // While an alarm rings, opening the app goes straight to its challenge.
+        app.fitnova.alarm.RingRedirect.install(context)
+    }
+
+    fun goToBed() = Graph.sleep.goToBed()
+
+    fun cancelBed() = Graph.sleep.cancelBed()
+
+    fun wakeUp() {
+        viewModelScope.launch {
+            val night = Graph.sleep.wakeUp("tap")
+            _messages.emit(if (night != null) "☀️ Slept ${app.fitnova.domain.hm(night.minutes)}" else "Too short to log")
+        }
+    }
+
+    /** Adds or edits a night (manual entry); the sheet has already checked it. */
+    fun saveSleep(entry: SleepEntry) {
+        viewModelScope.launch { Graph.sleep.save(entry) }
+    }
+
+    fun deleteSleep(id: String) {
+        viewModelScope.launch { Graph.sleep.delete(id) }
+    }
+
+    /** Saves [alarm] and arms it with the system (or disarms it when off), then says when it rings. */
+    fun saveAlarm(alarm: Alarm) {
+        val context = getApplication<Application>()
+        viewModelScope.launch {
+            val at = withContext(Dispatchers.IO) {
+                app.fitnova.alarm.AlarmScheduler.cancel(context, alarm.id) // a pending snooze belongs to the old settings
+                app.fitnova.alarm.AlarmScheduler.arm(context, alarm).also { Graph.alarms.save(alarm.copy(nextAt = it)) }
+            }
+            if (!alarm.enabled) return@launch
+            val minutes = at?.let { ((it - System.currentTimeMillis() + 59_999) / 60_000).toInt() }
+            _messages.emit(if (minutes != null) "⏰ Rings in ${app.fitnova.domain.untilText(minutes)}" else "⚠️ Allow Alarms & reminders so it can ring")
+        }
+    }
+
+    fun toggleAlarm(alarm: Alarm, on: Boolean) = saveAlarm(alarm.copy(enabled = on))
+
+    fun deleteAlarm(alarm: Alarm) {
+        val context = getApplication<Application>()
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { app.fitnova.alarm.AlarmScheduler.cancel(context, alarm.id) }
+            Graph.alarms.delete(alarm.id)
+        }
+    }
+
+    /** Rings [alarm]'s challenge in 5 seconds without saving anything; false while exact alarms aren't allowed. */
+    fun testRing(alarm: Alarm): Boolean = app.fitnova.alarm.AlarmScheduler.test(getApplication(), alarm)
+
+    /** Arms what couldn't be armed, e.g. right after exact-alarm access was granted (the system's own broadcast can lag). */
+    fun rearmAlarms() {
+        val context = getApplication<Application>()
+        viewModelScope.launch(Dispatchers.IO) { runCatching { app.fitnova.alarm.AlarmScheduler.rearmAll(context) } }
+    }
 
     // endregion
 }

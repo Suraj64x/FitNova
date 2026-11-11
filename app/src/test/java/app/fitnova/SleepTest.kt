@@ -1,6 +1,9 @@
 package app.fitnova
 
 import app.fitnova.domain.SleepEntry
+import app.fitnova.domain.hm
+import app.fitnova.domain.manualEntry
+import app.fitnova.domain.sleepProblem
 import app.fitnova.domain.sleepStats
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -100,5 +103,43 @@ class SleepTest {
         val s = sleepStats(listOf(e), 480, wakeDay, london)
         assertEquals(420, s.lastNight?.minutes)
         assertEquals(23 * 60, s.avgBedMinuteOfDay)
+    }
+
+    private fun ms(day: LocalDate, time: LocalTime) = day.atTime(time).toInstant(zone).toEpochMilli()
+
+    @Test fun manualBedtimeAfterWakeTimeMeansTheEveningBefore() {
+        val (bed, wake) = manualEntry(today, LocalTime.of(23, 30), LocalTime.of(7, 0), zone)
+        assertEquals(ms(today.minusDays(1), LocalTime.of(23, 30)), bed)
+        assertEquals(ms(today, LocalTime.of(7, 0)), wake)
+        val (napStart, napEnd) = manualEntry(today, LocalTime.of(1, 0), LocalTime.of(9, 0), zone) // after midnight, and naps
+        assertEquals(ms(today, LocalTime.of(1, 0)), napStart)
+        assertEquals(8 * 60L, (napEnd - napStart) / 60_000)
+    }
+
+    @Test fun manualNightOverTheSpringForwardIsSevenHours() {
+        val london = ZoneId.of("Europe/London")
+        val (bed, wake) = manualEntry(LocalDate.of(2026, 3, 29), LocalTime.of(23, 0), LocalTime.of(7, 0), london)
+        assertEquals(7 * 60L, (wake - bed) / 60_000)
+    }
+
+    @Test fun manualNightsAreChecked() {
+        val now = ms(today, LocalTime.of(12, 0))
+        val logged = night(today, LocalTime.of(23, 0), LocalTime.of(7, 0))
+        fun problem(bed: LocalTime, wake: LocalTime, day: LocalDate = today.minusDays(1), id: String? = null): String? {
+            val (b, w) = manualEntry(day, bed, wake, zone)
+            return sleepProblem(b, w, now, listOf(logged), id)
+        }
+        assertNull(problem(LocalTime.of(22, 30), LocalTime.of(6, 30)))
+        assertEquals("Wake time is in the future", problem(LocalTime.of(23, 0), LocalTime.of(13, 0), day = today, id = logged.id))
+        assertEquals("Shorter than 15 min", problem(LocalTime.of(14, 0), LocalTime.of(14, 10)))
+        assertEquals("Longer than 16 h", problem(LocalTime.of(7, 0), LocalTime.of(7, 0))) // same clock time = 24 h
+        assertEquals("Overlaps another night", problem(LocalTime.of(5, 0), LocalTime.of(9, 0), day = today))
+        assertNull(problem(LocalTime.of(23, 30), LocalTime.of(7, 30), day = today, id = logged.id)) // editing itself
+    }
+
+    @Test fun durationsReadAsHoursAndMinutes() {
+        assertEquals("45m", hm(45))
+        assertEquals("7h 05m", hm(425))
+        assertEquals("8h 00m", hm(480))
     }
 }

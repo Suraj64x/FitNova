@@ -346,7 +346,7 @@ private fun NightTiles(vm: AppViewModel, today: LocalDate) {
         onPauseOrDispose { }
     }
     val next = remember(alarms, now) { alarms.mapNotNull { it.next(now) }.minByOrNull { it.toInstant() } }
-    val clock = clockFormat()
+    val clock = homeClock()
     val last = sleep.lastNight
     val bed = bedtime
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -430,7 +430,7 @@ private fun numberUnits(vararg parts: Pair<String, String>): AnnotatedString {
 }
 
 /** Clock times in the phone's 12/24-hour setting. */
-private class ClockFormat(private val h24: Boolean, locale: Locale) {
+private class HomeClock(private val h24: Boolean, locale: Locale) {
     private val time = DateTimeFormatter.ofPattern(if (h24) "HH:mm" else "h:mm", locale)
     private val marker = DateTimeFormatter.ofPattern("a", locale)
     private val zone = ZoneId.systemDefault()
@@ -443,11 +443,11 @@ private class ClockFormat(private val h24: Boolean, locale: Locale) {
 }
 
 @Composable
-private fun clockFormat(): ClockFormat {
+private fun homeClock(): HomeClock {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     val h24 = DateFormat.is24HourFormat(context)
-    return remember(h24, locale) { ClockFormat(h24, locale) }
+    return remember(h24, locale) { HomeClock(h24, locale) }
 }
 
 // ---- Quick start ----

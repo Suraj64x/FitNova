@@ -194,7 +194,7 @@ private fun HeroStat(@DrawableRes emoji: Int, value: String, label: String, modi
     }
 }
 
-private class SyncLook(@param:DrawableRes val icon: Int, val tint: Color, val title: String, val line: String?)
+private class ProfileSyncLook(@param:DrawableRes val icon: Int, val tint: Color, val title: String, val line: String?)
 
 /** Sync state as an icon and words, when it last synced, and a Sync button that waits while one runs. */
 @Composable
@@ -205,14 +205,14 @@ private fun SyncCard(vm: AppViewModel, pending: Int) {
     val now = rememberMinuteClock()
     val waiting = if (pending > 0) "$pending waiting" else null
     val look = when (val s = sync) {
-        SyncState.Running -> SyncLook(R.drawable.ic_sync_duo, colors.primary, "Syncing…", waiting)
+        SyncState.Running -> ProfileSyncLook(R.drawable.ic_sync_duo, colors.primary, "Syncing…", waiting)
         is SyncState.Failed ->
-            if (s.offline) SyncLook(R.drawable.ic_cloud_off_duo, n.warn, "Offline", waiting ?: "Syncs when online")
-            else SyncLook(R.drawable.ic_warning_duo, n.bad, "Sync issue", s.message)
+            if (s.offline) ProfileSyncLook(R.drawable.ic_cloud_off_duo, n.warn, "Offline", waiting ?: "Syncs when online")
+            else ProfileSyncLook(R.drawable.ic_warning_duo, n.bad, "Sync issue", s.message)
         is SyncState.Done ->
-            if (waiting != null) SyncLook(R.drawable.ic_cloud_up_duo, n.warn, waiting, "Synced ${updatedAgo(s.at, now)}")
-            else SyncLook(R.drawable.ic_cloud_check_duo, n.good, "All synced", "Synced ${updatedAgo(s.at, now)}")
-        SyncState.Idle -> SyncLook(R.drawable.ic_cloud_up_duo, colors.onSurfaceVariant, waiting ?: "Not synced yet", null)
+            if (waiting != null) ProfileSyncLook(R.drawable.ic_cloud_up_duo, n.warn, waiting, "Synced ${updatedAgo(s.at, now)}")
+            else ProfileSyncLook(R.drawable.ic_cloud_check_duo, n.good, "All synced", "Synced ${updatedAgo(s.at, now)}")
+        SyncState.Idle -> ProfileSyncLook(R.drawable.ic_cloud_up_duo, colors.onSurfaceVariant, waiting ?: "Not synced yet", null)
     }
     val running = sync == SyncState.Running
     Panel {

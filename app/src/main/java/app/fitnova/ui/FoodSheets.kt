@@ -88,7 +88,7 @@ fun RecipeSheet(r: Recipe, onLog: () -> Unit, onDismiss: () -> Unit) {
     var note by remember(r.id) { mutableStateOf<String?>(null) }
     val photoWidth = LocalWindowInfo.current.containerSize.width.takeIf { it > 0 } ?: 720
     val photoHeight = with(LocalDensity.current) { 200.dp.roundToPx() }
-    val open = { url: String -> if (!openLink(context, url)) note = "No app here can open links" }
+    val open = { url: String -> if (!openFoodLink(context, url)) note = "No app here can open links" }
 
     NovaSheet(onDismiss, footer = { PrimaryButton("Log meal · ${r.kcal} kcal", onLog) }, message = note) {
         r.photo?.let {
@@ -154,7 +154,7 @@ fun RecipeSheet(r: Recipe, onLog: () -> Unit, onDismiss: () -> Unit) {
 }
 
 /** Opens [url] in a browser. False when nothing on the phone can open it, instead of crashing. */
-private fun openLink(context: Context, url: String): Boolean = try {
+private fun openFoodLink(context: Context, url: String): Boolean = try {
     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     true
 } catch (e: ActivityNotFoundException) {

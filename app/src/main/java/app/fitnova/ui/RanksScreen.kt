@@ -1,31 +1,6 @@
 package app.fitnova.ui
 
-import android.text.format.DateUtils
-import android.content.Intent
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.sp
-import app.fitnova.BoardState
-import app.fitnova.GroupsState
-import app.fitnova.Scope
-import app.fitnova.data.Group
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,427 +8,560 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.fitnova.AppViewModel
+import app.fitnova.BoardState
 import app.fitnova.Graph
+import app.fitnova.GroupsState
 import app.fitnova.Period
 import app.fitnova.R
+import app.fitnova.Scope
+import app.fitnova.data.Group
 import app.fitnova.data.Rank
 
-private val Medals = listOf(Color(0xFFD4A72C), Color(0xFF9AA3AD), Color(0xFFB87333))
-private val MedalEmoji = listOf("🥇", "🥈", "🥉")
+private val ScopeLabels = Scope.entries.map { it.label }
+internal val RankPeriods = Period.entries.map { it.label }
 
 @Composable
 fun RanksScreen(vm: AppViewModel, padding: PaddingValues) {
     val signedIn = vm.username != null
-    LaunchedEffect(signedIn) {
-        if (signedIn) {
-            vm.loadBoard()
-            vm.loadGroups()
-        }
-    }
+    // A tab visit reuses lists fetched in the last 2 minutes; the refresh button forces a reload.
+    LaunchedEffect(signedIn) { if (signedIn) vm.refreshRanks() }
     var creating by rememberSaveable { mutableStateOf<Boolean?>(null) } // null = closed, true = club, false = group
     var joining by rememberSaveable { mutableStateOf(false) }
+    val open = vm.openGroup
+    // Creating or joining ends in the group's own sheet, which takes over from the form.
+    LaunchedEffect(open) {
+        if (open != null) {
+            creating = null
+            joining = false
+        }
+    }
+    val me = remember(vm.username) { Graph.session.userId }
+    val lists = vm.groups
+    val myGroups = remember(lists.mine) { lists.mine.filter { !it.isCommunity } }
+    val gutter = socialGutter()
+    val create = { club: Boolean ->
+        vm.clearGroupNote()
+        creating = club
+    }
+    val join = {
+        vm.clearGroupNote()
+        joining = true
+    }
+    val openGroup = { g: Group ->
+        vm.clearGroupNote()
+        vm.openGroup(g)
+    }
 
     LazyColumn(
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding() + 16.dp, bottom = padding.calculateBottomPadding() + 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = gutter,
+            end = gutter,
+            top = padding.calculateTopPadding() + 8.dp,
+            bottom = padding.calculateBottomPadding() + 24.dp,
+        ),
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Leaderboard", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                if (signedIn) {
-                    Box(
-                        Modifier.size(40.dp).clip(MaterialTheme.shapes.small).clickable {
-                            vm.loadBoard()
-                            vm.loadGroups()
-                        },
-                        contentAlignment = Alignment.Center,
-                    ) { Glyph(R.drawable.ic_refresh, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
-            }
-        }
-        item {
-            val emoji = mapOf(Scope.GLOBAL to "🌍", Scope.GROUPS to "👥", Scope.COMMUNITIES to "🏘️")
-            Segmented(Scope.entries.map { "${emoji[it]} ${it.label}" }, Scope.entries.indexOf(vm.scope), { vm.scope = Scope.entries[it] })
-        }
+        ranksItem("header") { RanksHeader(vm, signedIn) }
         if (!signedIn) {
-            item {
-                Panel {
-                    EmptyNote("Sign in to compete", figure = app.fitnova.domain.Exercise.HIGH_KNEES)
-                    PrimaryButton("Sign in", onClick = vm::openProfile)
-                }
-            }
+            ranksItem("sign-in") { SignInCard(vm::openProfile) }
             return@LazyColumn
         }
+        ranksItem("scope") { Segmented(ScopeLabels, Scope.entries.indexOf(vm.scope), { vm.scope = Scope.entries[it] }) }
         when (vm.scope) {
             Scope.GLOBAL -> {
-                item { Segmented(Period.entries.map { it.label }, Period.entries.indexOf(vm.board.period), { vm.loadBoard(Period.entries[it]) }) }
-                item { Board(vm.board, onRetry = { vm.loadBoard() }) }
+                ranksItem("period") { Segmented(RankPeriods, Period.entries.indexOf(vm.board.period), { vm.loadBoard(Period.entries[it]) }) }
+                rankBoard(vm.board, me, showYou = true, onRetry = { vm.loadBoard() })
             }
-            Scope.GROUPS -> {
-                item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        SecondaryButton("＋ Create", onClick = { creating = false }, modifier = Modifier.weight(1f))
-                        SecondaryButton("🔑 Join", onClick = { joining = true }, modifier = Modifier.weight(1f))
+            Scope.GROUPS -> groupScope(
+                lists, myGroups, vm.groupBusy, openGroup, onJoin = null, onRetry = vm::loadGroups,
+                actions = {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SocialPill("Create", { create(false) }, Modifier.weight(1f), icon = R.drawable.ic_plus)
+                        SocialPill("Join", join, Modifier.weight(1f), icon = R.drawable.ic_key)
                     }
-                }
-                val mine = vm.groups.mine.filter { !it.isCommunity }
-                item { GroupList(vm.groups, mine, empty = "No groups yet" to "👥", onOpen = vm::openGroup, onJoin = null) }
-            }
-            Scope.COMMUNITIES -> {
-                item { SecondaryButton("＋ New club", onClick = { creating = true }) }
-                item { GroupList(vm.groups, vm.groups.communities, empty = "No clubs yet" to "🏘️", onOpen = vm::openGroup, onJoin = vm::joinCommunity) }
-            }
-        }
-    }
-
-    vm.openGroup?.let { g ->
-        GroupSheet(
-            group = g,
-            board = vm.groupBoard,
-            onPeriod = vm::loadGroupBoard,
-            onJoin = if (g.isCommunity && vm.groups.communities.none { it.id == g.id && it.joined }) ({ vm.joinCommunity(g) }) else null,
-            onLeave = { vm.leaveGroup(g) },
-            onDismiss = vm::closeGroup,
-        )
-    }
-    creating?.let { club ->
-        CreateGroupDialog(club, onCreate = { name, emoji -> creating = null; vm.createGroup(name, club, emoji) }, onDismiss = { creating = null })
-    }
-    if (joining) JoinDialog(onJoin = { code -> joining = false; vm.joinGroup(code) }, onDismiss = { joining = false })
-}
-
-/** Podium for the top three, then the rest as rows. Shared by the global and group boards. */
-@Composable
-private fun Board(board: BoardState, onRetry: () -> Unit) {
-    val me = Graph.session.userId
-    when {
-        board.rows.isEmpty() && board.loading -> Panel(padding = PaddingValues(0.dp)) { repeat(5) { PlaceholderRow() } }
-        board.rows.isEmpty() && board.error != null -> Panel {
-            EmptyNote("Couldn't load", board.error, emoji = "📡")
-            SecondaryButton("Try again", onClick = onRetry)
-        }
-        board.rows.isEmpty() -> Panel { EmptyNote("No scores yet", emoji = "🏁") }
-        else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            MyRank(board.rows, me)
-            val rest = if (board.rows.size >= 3) {
-                Podium(board.rows.take(3), me)
-                board.rows.drop(3)
-            } else {
-                board.rows
-            }
-            if (rest.isNotEmpty()) {
-                Panel(padding = PaddingValues(0.dp)) {
-                    rest.forEachIndexed { i, r ->
-                        RankRow(r, me = r.userId == me)
-                        if (i < rest.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    }
-                }
-            }
-            if (board.updatedAt > 0) {
-                Text(
-                    "Updated ${DateUtils.getRelativeTimeSpanString(board.updatedAt)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun GroupList(state: GroupsState, list: List<Group>, empty: Pair<String, String>, onOpen: (Group) -> Unit, onJoin: ((Group) -> Unit)?) {
-    when {
-        list.isEmpty() && state.loading -> Panel(padding = PaddingValues(0.dp)) { repeat(3) { PlaceholderRow() } }
-        list.isEmpty() && state.error != null -> Panel { EmptyNote("Couldn't load", state.error, emoji = "📡") }
-        list.isEmpty() -> Panel { EmptyNote(empty.first, emoji = empty.second) }
-        else -> Panel(padding = PaddingValues(0.dp)) {
-            list.forEachIndexed { i, g ->
-                Row(
-                    Modifier.fillMaxWidth().clickable { onOpen(g) }.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        Modifier.size(46.dp).clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center,
-                    ) { Text(g.emoji, style = MaterialTheme.typography.titleLarge) }
-                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                        Text(g.name, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                        Text("👤 ${g.members}${if (g.isOwner) " · 👑" else ""}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    when {
-                        onJoin != null && !g.joined -> Chip("Join", selected = true, onClick = { onJoin(g) })
-                        onJoin != null -> Tag("✓ Joined", Tone.good)
-                        else -> Glyph(R.drawable.ic_chevron, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18)
-                    }
-                }
-                if (i < list.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GroupSheet(
-    group: Group,
-    board: BoardState,
-    onPeriod: (Period) -> Unit,
-    onJoin: (() -> Unit)?,
-    onLeave: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val context = LocalContext.current
-    var confirmLeave by remember { mutableStateOf(false) }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(60.dp).clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center,
-                ) { Text(group.emoji, style = MaterialTheme.typography.headlineMedium) }
-                Column(Modifier.padding(start = 14.dp)) {
-                    Text(group.name, style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        "${if (group.isCommunity) "🏘️ Club" else "👥 Group"} · 👤 ${group.members}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            group.inviteCode?.let { code ->
-                Panel(padding = PaddingValues(14.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text("🔑 Invite code", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(code, style = MaterialTheme.typography.headlineSmall.copy(fontFamily = FontFamily.Monospace, letterSpacing = 4.sp))
+                },
+                empty = {
+                    Panel {
+                        EmptyState("No groups yet", body = "Train with friends", illu = Illu.GROUPS_EMPTY)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SocialPill("Create", { create(false) }, Modifier.weight(1f), icon = R.drawable.ic_plus)
+                            SocialPill("Join", join, Modifier.weight(1f), icon = R.drawable.ic_key)
                         }
-                        Chip("Share", selected = true, onClick = {
-                            val text = "Join my Fit Nova group \"${group.name}\" with code $code"
-                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
-                        })
                     }
-                }
-            }
-            if (onJoin != null) PrimaryButton("Join club", onClick = onJoin)
-            Segmented(Period.entries.map { it.label }, Period.entries.indexOf(board.period), { onPeriod(Period.entries[it]) })
-            Board(board, onRetry = { onPeriod(board.period) })
-            if (onJoin == null) SecondaryButton("Leave", onClick = { confirmLeave = true }, color = Tone.bad)
+                },
+            )
+            Scope.COMMUNITIES -> groupScope(
+                lists, lists.communities, vm.groupBusy, openGroup, onJoin = vm::joinClub, onRetry = vm::loadGroups,
+                actions = { SocialPill("New club", { create(true) }, Modifier.fillMaxWidth(), icon = R.drawable.ic_plus) },
+                empty = {
+                    Panel { EmptyState("No clubs yet", body = "Start one for everyone", illu = Illu.GROUPS_EMPTY, action = "New club", onAction = { create(true) }) }
+                },
+            )
         }
     }
-    if (confirmLeave) {
-        AlertDialog(
-            onDismissRequest = { confirmLeave = false },
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            title = { Text("Leave ${group.name}?") },
-            confirmButton = { TextButton(onClick = { confirmLeave = false; onLeave() }) { Text("Leave", color = Tone.bad) } },
-            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Cancel") } },
-        )
+
+    open?.let { GroupSheet(vm, it, me) }
+    creating?.let { club ->
+        CreateGroupSheet(vm, club) {
+            creating = null
+            vm.clearGroupNote()
+        }
+    }
+    if (joining) {
+        JoinGroupSheet(vm) {
+            joining = false
+            vm.clearGroupNote()
+        }
     }
 }
 
-private val GroupEmoji = listOf("💪", "🔥", "🏃", "🧘", "⚡", "🌱", "🏆", "🚴")
+/** A full-width item with the 12 dp gap under it. Rank and group rows skip it and sit flush, as one card. */
+internal fun LazyListScope.ranksItem(key: String, content: @Composable () -> Unit) =
+    item(key = key, contentType = key) { Box(Modifier.padding(bottom = 12.dp)) { content() } }
 
+/** "Updated 5m ago" over the title, a refresh button that turns into a spinner, and the avatar. */
 @Composable
-private fun CreateGroupDialog(club: Boolean, onCreate: (String, String) -> Unit, onDismiss: () -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var emoji by remember { mutableStateOf(GroupEmoji.first()) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.extraLarge,
-        title = { Text(if (club) "New club" else "New group") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(name, { name = it.take(40) }, label = { Text("Name") }, singleLine = true, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    GroupEmoji.forEach { e ->
-                        Box(
-                            Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(MaterialTheme.shapes.small)
-                                .background(if (e == emoji) Tone.accent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { emoji = e },
-                            contentAlignment = Alignment.Center,
-                        ) { Text(e) }
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(enabled = name.trim().length >= 2, onClick = { onCreate(name, emoji) }) { Text("Create") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+private fun RanksHeader(vm: AppViewModel, signedIn: Boolean) {
+    val board = vm.board
+    val loading = board.loading || vm.groups.loading
+    val now = rememberMinuteClock()
+    val status = when {
+        !signedIn -> null
+        loading -> "Updating…"
+        board.updatedAt > 0 -> "Updated ${updatedAgo(board.updatedAt, now)}"
+        else -> null
+    }
+    ScreenHeader("Ranks", subtitle = status) {
+        if (signedIn) RefreshButton(loading) { vm.refreshRanks(force = true) }
+        ProfileButton(vm.username, vm::openProfile)
+    }
 }
 
 @Composable
-private fun JoinDialog(onJoin: (String) -> Unit, onDismiss: () -> Unit) {
-    var code by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.extraLarge,
-        title = { Text("🔑 Join a group") },
-        text = {
-            OutlinedTextField(
-                code,
-                { v -> code = v.uppercase().filter { it.isLetterOrDigit() }.take(6) },
-                label = { Text("Invite code") },
-                singleLine = true,
-                shape = MaterialTheme.shapes.medium,
-                textStyle = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Monospace, letterSpacing = 4.sp),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = { TextButton(enabled = code.length == 6, onClick = { onJoin(code) }) { Text("Join") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+private fun RefreshButton(loading: Boolean, onRefresh: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    if (loading) {
+        Box(Modifier.size(48.dp).semantics { contentDescription = "Refreshing" }, contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(Modifier.size(24.dp), color = colors.primary, strokeWidth = 2.5.dp)
+        }
+    } else {
+        IconCircleButton(R.drawable.ic_refresh, "Refresh", onRefresh, container = Color.Transparent, tint = colors.onSurfaceVariant)
+    }
 }
 
 @Composable
-private fun RankRow(r: Rank, me: Boolean) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(if (me) Tone.accent.copy(alpha = 0.10f) else Color.Transparent)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.width(34.dp)) {
+private fun SignInCard(onSignIn: () -> Unit) {
+    HeroPanel {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Illustration(Illu.PODIUM, height = 180.dp)
+            Spacer(Modifier.height(16.dp))
+            Text("Sign in to compete", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(4.dp))
             Text(
-                MedalEmoji.getOrNull(r.rank - 1) ?: "${r.rank}",
-                style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                "Weekly boards, groups and clubs",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
+            Spacer(Modifier.height(20.dp))
+            PrimaryButton("Sign in", onSignIn)
         }
-        Avatar(r.name, if (me) Tone.accent else MaterialTheme.colorScheme.onSurfaceVariant, 36)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                if (me) "${r.name} · you" else r.name,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = if (me) FontWeight.SemiBold else FontWeight.Medium),
-            )
-            Text("🏋️ ${r.workouts}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Text("${r.points}", style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold))
-        Text(" pts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-/** Top three as a podium: 2nd, 1st, 3rd, with flat medal-tinted blocks. */
-@Composable
-private fun Podium(top: List<Rank>, me: String?) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
-        listOf(1, 0, 2).forEach { i ->
-            val r = top[i]
-            val medal = Medals[i]
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(if (i == 0) "👑" else " ", style = MaterialTheme.typography.titleLarge)
-                Avatar(r.name, medal, if (i == 0) 60 else 50, ring = r.userId == me)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    if (r.userId == me) "You" else r.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                )
-                Text("${r.points} pts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(8.dp))
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(listOf(110.dp, 84.dp, 64.dp)[i])
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
-                        .background(medal.copy(alpha = 0.16f)),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    Text(MedalEmoji[i], style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp))
-                }
+/** The board: your standing, a podium for the top three, then one lazy row per person. Shared by the group sheet. */
+internal fun LazyListScope.rankBoard(board: BoardState, me: String?, showYou: Boolean, onRetry: () -> Unit) {
+    val rows = board.rows
+    val error = board.error
+    when {
+        rows.isEmpty() && board.loading -> ranksItem("board-wait") { PlaceholderCard(5) }
+        rows.isEmpty() && error != null -> ranksItem("board-error") { RanksError(error, onRetry) }
+        rows.isEmpty() -> ranksItem("board-empty") { Panel { EmptyState("No scores yet", body = "Train to claim #1", illu = Illu.PODIUM) } }
+        else -> {
+            if (error != null) ranksItem("board-stale") { StaleNote(error, onRetry) }
+            if (showYou) ranksItem("you") { YouCard(rows, me) }
+            // Group boards list members on 0 points too (all tied at #1), so the podium waits for three scorers.
+            val start = if (rows.size >= 3 && rows[2].points > 0) 3 else 0
+            if (start > 0) ranksItem("podium") { Podium(rows, me) }
+            val count = rows.size - start
+            items(count, key = { rows[start + it].userId }, contentType = { "rank" }) { i ->
+                val r = rows[start + i]
+                RankRow(r, r.userId == me, i, count)
             }
         }
     }
 }
 
-/** Grey bars in place of rows while the first load is in flight (no shimmer: cheaper and calmer). */
-@Composable
-private fun PlaceholderRow() {
-    val c = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(width = 18.dp, height = 12.dp).clip(MaterialTheme.shapes.extraSmall).background(c))
-        Spacer(Modifier.width(16.dp))
-        Box(Modifier.weight(1f).height(12.dp).clip(MaterialTheme.shapes.extraSmall).background(c))
-        Spacer(Modifier.width(40.dp))
-        Box(Modifier.size(width = 36.dp, height = 12.dp).clip(MaterialTheme.shapes.extraSmall).background(c))
+private fun LazyListScope.groupScope(
+    state: GroupsState,
+    list: List<Group>,
+    busy: String?,
+    onOpen: (Group) -> Unit,
+    onJoin: ((Group) -> Unit)?,
+    onRetry: () -> Unit,
+    actions: @Composable () -> Unit,
+    empty: @Composable () -> Unit,
+) {
+    val error = state.error
+    when {
+        list.isEmpty() && state.loading -> ranksItem("groups-wait") { PlaceholderCard(3) }
+        list.isEmpty() && error != null -> ranksItem("groups-error") { RanksError(error, onRetry) }
+        list.isEmpty() -> ranksItem("groups-empty") { empty() }
+        else -> {
+            ranksItem("groups-actions") { actions() }
+            if (error != null) ranksItem("groups-stale") { StaleNote(error, onRetry) }
+            items(list.size, key = { list[it].id }, contentType = { "group" }) { i ->
+                GroupRow(list[i], i, list.size, busy, onOpen, onJoin)
+            }
+        }
     }
 }
 
-/** Initial in a tinted circle; [ring] outlines it (used for "you"). */
+/** Where you stand: rank, points and the gap to the next place, or why you aren't listed. */
 @Composable
-private fun Avatar(name: String, tone: Color, size: Int, ring: Boolean = false) {
-    Box(
-        Modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(tone.copy(alpha = 0.16f))
-            .then(if (ring) Modifier.border(2.dp, Tone.accent, CircleShape) else Modifier),
-        contentAlignment = Alignment.Center,
-    ) { Text(name.take(1).uppercase(), style = if (size >= 48) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleSmall, color = tone) }
-}
-
-/** Where you stand: your rank, points, and how far the next place is. */
-@Composable
-private fun MyRank(rows: List<Rank>, me: String?) {
-    val mine = rows.firstOrNull { it.userId == me }
-    Panel(padding = PaddingValues(16.dp)) {
+private fun YouCard(rows: List<Rank>, me: String?) {
+    val s = remember(rows, me) { boardStanding(rows, me) }
+    val colors = MaterialTheme.colorScheme
+    val type = MaterialTheme.typography
+    val mine = s.mine
+    val ahead = s.ahead
+    val line = when {
+        mine == null -> if (s.full) "Not in top $BOARD_LIMIT" else "Sync a workout to appear"
+        ahead == null -> "Top of the board"
+        else -> "${ahead.points - mine.points} pts to #${ahead.rank}"
+    }
+    val spoken = when {
+        mine == null -> "Your rank: $line"
+        ahead == null -> "Your rank ${mine.rank}, ${mine.points} points, top of the board"
+        else -> "Your rank ${mine.rank}, ${mine.points} points, ${ahead.points - mine.points} points behind rank ${ahead.rank}"
+    }
+    Panel(Modifier.clearAndSetSemantics { contentDescription = spoken }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(52.dp).clip(MaterialTheme.shapes.medium).background(Tone.accent.copy(alpha = 0.14f)),
+                Modifier
+                    .heightIn(min = 56.dp)
+                    .widthIn(min = 56.dp)
+                    .background(colors.primary.copy(alpha = 0.14f), MaterialTheme.shapes.medium)
+                    .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(if (mine == null) "–" else "#${mine.rank}", style = MaterialTheme.typography.titleLarge, color = Tone.accent)
+                Text(
+                    when {
+                        mine != null -> "#${mine.rank}"
+                        s.full -> "$BOARD_LIMIT+"
+                        else -> "–"
+                    },
+                    style = type.headlineSmall,
+                    color = colors.primary,
+                    maxLines = 1,
+                )
             }
-            Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                Text("Your rank", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (mine == null) {
-                    Text("Log a workout to join", style = MaterialTheme.typography.titleSmall)
-                } else {
-                    val ahead = rows.lastOrNull { it.points > mine.points }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("You", style = type.labelLarge, color = colors.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    when {
+                        mine == null -> Unit
+                        ahead == null -> Emoji(R.drawable.emoji_trophy, 18.dp, Modifier.padding(end = 6.dp))
+                        else -> Glyph(R.drawable.ic_trend_up, Modifier.padding(end = 6.dp), tint = colors.primary, size = 18)
+                    }
                     Text(
-                        when {
-                            mine.rank == 1 -> "🏆 Top of the board"
-                            ahead != null -> "⬆️ ${ahead.points - mine.points} pts to #${ahead.rank}"
-                            else -> "Keep going"
-                        },
-                        style = MaterialTheme.typography.titleSmall,
+                        line,
+                        style = type.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
             if (mine != null) {
-                Text("${mine.points}", style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"))
-                Text(" pts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.width(8.dp))
+                Points(mine.points, big = true)
+            }
+        }
+    }
+}
+
+private val MedalArt = intArrayOf(R.drawable.emoji_medal_1, R.drawable.emoji_medal_2, R.drawable.emoji_medal_3)
+private val MedalTint = listOf(Nova.Gold, Nova.Silver, Nova.Bronze)
+private val StepHeight = listOf(88.dp, 64.dp, 48.dp)
+private val StepShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+
+/** 2-1-3 podium. Medal, colour and step height follow the rank, so a tie shares them; a crown sits on every #1. */
+@Composable
+private fun Podium(rows: List<Rank>, me: String?) {
+    val spots = remember(rows) { podium(rows) }
+    Panel(padding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+            for ((r, medal) in spots) PodiumSpot(r, medal, r.userId == me, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun PodiumSpot(r: Rank, medal: Int, mine: Boolean, modifier: Modifier) {
+    val tint = MedalTint[medal]
+    Column(
+        modifier.clearAndSetSemantics { contentDescription = "Rank ${r.rank}, ${if (mine) "you" else r.name}, ${r.points} points" },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (r.rank == 1) Emoji(R.drawable.emoji_crown, 28.dp)
+        Avatar(r.name, if (medal == 0) 64.dp else 56.dp, tint = tint, ring = mine)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            if (mine) "You" else r.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+        Points(r.points)
+        Spacer(Modifier.height(8.dp))
+        Box(
+            Modifier.fillMaxWidth().height(StepHeight[medal]).background(tint.copy(alpha = 0.16f), StepShape),
+            contentAlignment = Alignment.TopCenter,
+        ) { Emoji(MedalArt[medal], 32.dp, Modifier.padding(top = 8.dp)) }
+    }
+}
+
+@Composable
+private fun RankRow(r: Rank, mine: Boolean, index: Int, count: Int) {
+    val colors = MaterialTheme.colorScheme
+    val type = MaterialTheme.typography
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .cardSegment(index, count, colors.surfaceContainer, colors.outlineVariant, divider = 104.dp, highlight = if (mine) colors.primary.copy(alpha = 0.08f) else null)
+            .heightIn(min = 64.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clearAndSetSemantics {
+                contentDescription = "Rank ${r.rank}, ${if (mine) "you" else r.name}, ${r.points} points, ${workoutCount(r.workouts)}"
+            },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.width(28.dp), contentAlignment = Alignment.Center) {
+            // Without a podium the top scorers still get their medal; nobody gets one for 0 points.
+            if (r.rank in 1..3 && r.points > 0) {
+                Emoji(MedalArt[r.rank - 1], 24.dp)
+            } else {
+                Text("${r.rank}", style = type.labelLarge, color = colors.onSurfaceVariant, maxLines = 1)
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Avatar(r.name, 40.dp, tint = if (mine) colors.primary else colors.onSurfaceVariant)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(r.name, style = type.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (mine) {
+                    Spacer(Modifier.width(6.dp))
+                    Tag("You", colors.primary)
+                }
+            }
+            Text(workoutCount(r.workouts), style = type.bodySmall, color = colors.onSurfaceVariant, maxLines = 1)
+        }
+        Spacer(Modifier.width(8.dp))
+        Points(r.points)
+    }
+}
+
+/** A number and its "pts" unit on one baseline. */
+@Composable
+private fun Points(points: Int, big: Boolean = false) {
+    val type = MaterialTheme.typography
+    Row {
+        Text(
+            "$points",
+            style = if (big) type.headlineSmall else type.labelLarge.copy(fontWeight = FontWeight.Bold),
+            maxLines = 1,
+            modifier = Modifier.alignByBaseline(),
+        )
+        Text(" pts", style = type.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, modifier = Modifier.alignByBaseline())
+    }
+}
+
+@Composable
+private fun GroupRow(g: Group, index: Int, count: Int, busy: String?, onOpen: (Group) -> Unit, onJoin: ((Group) -> Unit)?) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(segmentShape(index, count))
+            .cardSegment(index, count, colors.surfaceContainer, colors.outlineVariant, divider = 72.dp)
+            .clickable { onOpen(g) }
+            .heightIn(min = 72.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        GroupBadge(g.emoji, 44.dp)
+        Column(
+            Modifier.weight(1f).clearAndSetSemantics {
+                contentDescription = "${g.name}, ${memberCount(g.members)}${if (g.isOwner) ", yours" else ""}"
+            },
+        ) {
+            Text(g.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Glyph(R.drawable.ic_users, tint = colors.onSurfaceVariant, size = 16)
+                Spacer(Modifier.width(4.dp))
+                Text("${g.members}", style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
+                if (g.isOwner) {
+                    Spacer(Modifier.width(8.dp))
+                    Glyph(R.drawable.ic_crown, tint = colors.onSurfaceVariant, size = 16)
+                }
+            }
+        }
+        when {
+            onJoin == null -> Glyph(R.drawable.ic_chevron_right, tint = colors.onSurfaceVariant)
+            g.joined -> Tag("Joined", Nova.colors.good, dot = true)
+            else -> SocialPill("Join", { onJoin(g) }, enabled = busy == null, loading = busy == g.id)
+        }
+    }
+}
+
+/** Grey bars in place of rows while the first load runs (static: no shimmer). */
+@Composable
+private fun PlaceholderCard(rows: Int) {
+    val bar = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val shape = MaterialTheme.shapes.extraSmall
+    Panel(Modifier.clearAndSetSemantics { contentDescription = "Loading" }, padding = PaddingValues(vertical = 4.dp)) {
+        repeat(rows) {
+            Row(Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(40.dp).background(bar, CircleShape))
+                Spacer(Modifier.width(12.dp))
+                Box(Modifier.weight(1f).height(12.dp).background(bar, shape))
+                Spacer(Modifier.width(48.dp))
+                Box(Modifier.size(width = 36.dp, height = 12.dp).background(bar, shape))
+            }
+        }
+    }
+}
+
+private fun isOffline(error: String) = error.contains("offline", ignoreCase = true)
+
+/** Nothing to show and the load failed. The API's offline text talks about workouts, so it gets a board-sized title instead. */
+@Composable
+private fun RanksError(error: String, onRetry: () -> Unit) {
+    val offline = isOffline(error)
+    Panel {
+        EmptyState(
+            if (offline) "You're offline" else "Couldn't load",
+            body = if (offline) null else error,
+            illu = Illu.OFFLINE,
+            action = "Retry",
+            onAction = onRetry,
+        )
+    }
+}
+
+/** Older rows are still on screen but the refresh failed. */
+@Composable
+private fun StaleNote(error: String, onRetry: () -> Unit) {
+    val warn = Nova.colors.warn
+    val offline = isOffline(error)
+    Row(
+        Modifier.fillMaxWidth().background(warn.copy(alpha = 0.14f), MaterialTheme.shapes.medium).padding(start = 16.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Glyph(if (offline) R.drawable.ic_cloud_off else R.drawable.ic_warning, tint = warn)
+        Spacer(Modifier.width(12.dp))
+        Text(
+            if (offline) "Offline" else "Couldn't refresh",
+            style = MaterialTheme.typography.labelLarge,
+            color = warn,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onRetry) { Text("Retry", style = MaterialTheme.typography.labelLarge) }
+    }
+}
+
+private val SegmentOnly = RoundedCornerShape(24.dp)
+private val SegmentFirst = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+private val SegmentLast = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+
+/** Clip for a clickable [cardSegment], so its ripple keeps the card's corners. */
+private fun segmentShape(index: Int, count: Int): Shape = when {
+    count == 1 -> SegmentOnly
+    index == 0 -> SegmentFirst
+    index == count - 1 -> SegmentLast
+    else -> RectangleShape
+}
+
+/**
+ * One row of a card that is split into lazy items: the card fill and 1 dp hairline, rounded only at the ends,
+ * and one divider (inset by [divider]) between rows. Paths come from drawWithCache, so scrolling allocates nothing.
+ */
+private fun Modifier.cardSegment(index: Int, count: Int, fill: Color, edge: Color, divider: Dp, highlight: Color? = null) = drawWithCache {
+    val w = 1.dp.toPx()
+    val radius = 24.dp.toPx()
+    val first = index == 0
+    val last = index == count - 1
+    fun box(inset: Float): Path {
+        val top = CornerRadius((if (first) radius - inset else 0f).coerceAtLeast(0f))
+        val bottom = CornerRadius((if (last) radius - inset else 0f).coerceAtLeast(0f))
+        return Path().apply { addRoundRect(RoundRect(inset, inset, size.width - inset, size.height - inset, top, top, bottom, bottom)) }
+    }
+    val area = box(0f)
+    val outline = box(w / 2f) // inside the bounds, like Modifier.border
+    val stroke = Stroke(w)
+    val cut = divider.toPx()
+    onDrawBehind {
+        drawPath(area, fill)
+        if (highlight != null) drawPath(area, highlight)
+        // The upper row draws the line between two rows (inset at the leading side); the lower row drops its top edge.
+        val rtl = layoutDirection == LayoutDirection.Rtl
+        val insetLeft = if (rtl) size.width - cut else w
+        val insetRight = if (rtl) size.width - w else cut
+        clipRect(w, 0f, size.width - w, if (first) 0f else w, ClipOp.Difference) {
+            clipRect(insetLeft, size.height - w, insetRight, if (last) size.height - w else size.height, ClipOp.Difference) {
+                drawPath(outline, edge, style = stroke)
             }
         }
     }

@@ -609,4 +609,97 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { Graph.meals.add(m) }
     }
     // endregion
+
+    // region social
+
+    private var ranksFor: String? = null
+    private var ranksAt = 0L
+
+    /** Loads the board and group lists unless this account got them under 2 minutes ago; [force] is the refresh button. */
+    fun refreshRanks(force: Boolean = false) {
+        val user = username ?: return
+        val now = System.currentTimeMillis()
+        val fresh = user == ranksFor && now - ranksAt < 2 * 60_000 && board.error == null && groups.error == null
+        if (fresh && !force) return
+        ranksFor = user
+        ranksAt = now
+        loadBoard()
+        loadGroups()
+    }
+
+    /** The group request in flight ("create", "join" or a group id): its button shows busy and no other can start. */
+    var groupBusy by mutableStateOf<String?>(null)
+        private set
+
+    /** Status line for the open group sheet, since snackbars sit behind sheets. */
+    var groupNote by mutableStateOf<String?>(null)
+        private set
+
+    fun clearGroupNote() {
+        groupNote = null
+    }
+
+    /** Creates a group or club, then opens its sheet. */
+    fun createGroupAndOpen(name: String, club: Boolean, emoji: String) = groupRequest("create") {
+        openGroup(Graph.api.createGroup(name.trim(), if (club) "community" else "group", emoji))
+    }
+
+    /** Joins a group by invite code, then opens its sheet. */
+    fun joinGroupByCode(code: String) = groupRequest("join") { openGroup(Graph.api.joinGroup(code)) }
+
+    fun joinClub(g: Group) = groupRequest(g.id) {
+        Graph.api.joinCommunity(g.id)
+        if (openGroup?.id == g.id) {
+            groupNote = "${g.emoji} Joined"
+            loadGroupBoard(groupBoard.period)
+        } else {
+            _messages.emit("${g.emoji} Joined ${g.name}")
+        }
+    }
+
+    /** Runs after the confirm dialog; the sheet closes once the server agrees. */
+    fun leaveGroupAndClose(g: Group) = groupRequest(g.id) {
+        Graph.api.leaveGroup(g.id)
+        closeGroup()
+        _messages.emit("Left ${g.name}")
+    }
+
+    private fun groupRequest(key: String, block: suspend () -> Unit) {
+        if (groupBusy != null || username == null) return
+        groupBusy = key
+        groupNote = null
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (e: Exception) {
+                val text = if ((e as? ApiException)?.code == 0) "You're offline" else e.userMessage()
+                // A sheet answers inside itself; a tap in the list answers in the snackbar.
+                if (key == "create" || key == "join" || openGroup?.id == key) groupNote = text else _messages.emit(text)
+            }
+            // Fresh lists before the button frees up, so a joined club never flashes "Join" again.
+            try {
+                groups = GroupsState(mine = Graph.api.myGroups(), communities = Graph.api.communities())
+            } catch (e: Exception) {
+                // Keep the lists as they are; the next refresh tries again.
+            }
+            groupBusy = null
+        }
+    }
+
+    /** Hides the sign-in error as soon as the form is edited. */
+    fun clearAuthError() {
+        if (auth.error != null) auth = auth.copy(error = null)
+    }
+
+    /** Daily reminder on (at the last time used, 19:00 the first time) or off. */
+    fun setReminderOn(on: Boolean) {
+        if (on) {
+            changeReminder(Graph.prefs.getInt("reminder_last_min", 19 * 60))
+        } else {
+            reminder?.let { Graph.prefs.edit().putInt("reminder_last_min", it).apply() }
+            changeReminder(null)
+        }
+    }
+
+    // endregion
 }

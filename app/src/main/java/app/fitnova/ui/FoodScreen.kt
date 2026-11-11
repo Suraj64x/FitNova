@@ -1,504 +1,619 @@
 package app.fitnova.ui
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.background
+import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fitnova.AppViewModel
 import app.fitnova.R
-import app.fitnova.domain.Activity
-import app.fitnova.domain.Body
-import app.fitnova.domain.Goal
+import app.fitnova.domain.FoodArt
+import app.fitnova.domain.GLASS_ML
+import app.fitnova.domain.HIGH_PROTEIN_G
+import app.fitnova.domain.Intake
 import app.fitnova.domain.Meal
 import app.fitnova.domain.Recipe
-import app.fitnova.domain.Sex
 import app.fitnova.domain.Targets
+import app.fitnova.domain.WATER_GOAL
+import app.fitnova.domain.WATER_MAX
+import app.fitnova.domain.filterRecipes
+import app.fitnova.domain.foodArt
 import app.fitnova.domain.intake
+import app.fitnova.domain.tapGlass
+import app.fitnova.domain.targets
+import kotlinx.coroutines.launch
 
 private val MealTypes = listOf("breakfast", "lunch", "dinner", "snack")
-private val MealEmoji = mapOf("breakfast" to "🍳", "lunch" to "🍛", "dinner" to "🍲", "snack" to "🥗")
-private val WaterBlue = Color(0xFF38B2E8)
-private val VegGreen = Color(0xFF1E9E55)
-private val NonVegRed = Color(0xFFC6402F)
+private val RecipePhoto = 72.dp
+
+/** Chip artwork for a meal type: the time of day, and a banana for snacks. */
+@DrawableRes
+private fun mealTypeArt(type: String) = when (type) {
+    "breakfast" -> R.drawable.emoji_sunrise
+    "lunch" -> R.drawable.emoji_sun
+    "dinner" -> R.drawable.emoji_moon
+    else -> R.drawable.emoji_banana
+}
+
+/** Fluent artwork for a food picture. */
+internal val FoodArt.res: Int
+    @DrawableRes get() = when (this) {
+        FoodArt.EGG -> R.drawable.emoji_egg
+        FoodArt.CHICKEN -> R.drawable.emoji_chicken
+        FoodArt.BANANA -> R.drawable.emoji_banana
+        FoodArt.AVOCADO -> R.drawable.emoji_avocado
+        FoodArt.APPLE -> R.drawable.emoji_apple
+        FoodArt.FLATBREAD -> R.drawable.emoji_flatbread
+        FoodArt.RICE -> R.drawable.emoji_rice
+        FoodArt.BOWL -> R.drawable.emoji_bowl
+        FoodArt.MILK -> R.drawable.emoji_milk
+        FoodArt.SALAD -> R.drawable.emoji_salad
+        FoodArt.CURRY -> R.drawable.emoji_curry
+        FoodArt.BROCCOLI -> R.drawable.emoji_broccoli
+        FoodArt.PLATE -> R.drawable.emoji_plate
+    }
 
 @Composable
 fun FoodScreen(vm: AppViewModel, padding: PaddingValues) {
     val meals by vm.meals.collectAsStateWithLifecycle()
-    val targets = vm.targets
+    val body = vm.body
+    val goal = remember(body) { body?.let(::targets) }
+    val eaten = remember(meals) { meals.intake() }
+    // Saveable, so the search and chips survive tab switches (AppRoot keeps each tab's saved state).
+    var query by rememberSaveable { mutableStateOf("") }
     var mealType by rememberSaveable { mutableStateOf<String?>(null) }
     var vegOnly by rememberSaveable { mutableStateOf(false) }
     var highProtein by rememberSaveable { mutableStateOf(false) }
     var adding by rememberSaveable { mutableStateOf(false) }
-    val recipes = vm.recipes.filter {
-        (mealType == null || it.meal == mealType) && (!vegOnly || it.veg) && (!highProtein || it.protein >= 20)
+    val recipes = vm.recipes
+    val shown = remember(recipes, query, mealType, vegOnly, highProtein) { filterRecipes(recipes, query, mealType, vegOnly, highProtein) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val gutter = if (LocalWindowInfo.current.containerDpSize.width >= 400.dp) 20.dp else 16.dp
+    val photoPx = with(LocalDensity.current) { RecipePhoto.roundToPx() }
+
+    // Food keeps its own snackbar: the app-wide one has no action button, and Undo needs one.
+    fun show(text: String, undo: Meal? = null) {
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            val result = snackbar.showSnackbar(text, actionLabel = undo?.let { "Undo" }, duration = SnackbarDuration.Short)
+            if (result == SnackbarResult.ActionPerformed && undo != null) vm.restoreMeal(undo)
+        }
     }
 
-    LazyColumn(
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding() + 18.dp, bottom = padding.calculateBottomPadding() + 28.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            Text("Nutrition", style = MaterialTheme.typography.headlineMedium)
-        }
-        item {
-            if (targets == null) {
-                Panel {
-                    EmptyNote("Daily targets", "Calories & protein, made for you", emoji = "🎯")
-                    PrimaryButton("Set up", onClick = { vm.editingBody = true })
-                }
-            } else {
-                TargetsCard(targets, meals, onEdit = { vm.editingBody = true })
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            // Edge-to-edge: without this the keyboard would cover the search field instead of the list scrolling up.
+            Modifier.fillMaxSize().imePadding(),
+            contentPadding = PaddingValues(
+                start = gutter,
+                end = gutter,
+                top = padding.calculateTopPadding() + 8.dp,
+                bottom = padding.calculateBottomPadding() + 32.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item(key = "header", contentType = "header") {
+                ScreenHeader("Food") { ProfileButton(vm.username, vm::openProfile) }
             }
-        }
-        item { WaterCard(vm.water, onSet = { vm.addWater(it - vm.water) }) }
-        item { SectionTitle("🍽️ Meals", action = "+ Add", onAction = { adding = true }) }
-        item {
+            item(key = "targets", contentType = "targets") {
+                if (goal == null) {
+                    HeroPanel {
+                        EmptyState(
+                            "Daily targets",
+                            "Calories and macros for your goal",
+                            emoji = R.drawable.emoji_salad,
+                            action = "Set targets",
+                            onAction = { vm.editingBody = true },
+                        )
+                    }
+                } else {
+                    TargetsCard(goal, eaten, onEdit = { vm.editingBody = true }, onInfo = { show("Estimates, not medical advice") })
+                }
+            }
+            item(key = "water", contentType = "water") { WaterCard(vm.water, vm::addWater) }
+            item(key = "meals", contentType = "title") {
+                SectionTitle("Meals", R.drawable.emoji_plate, action = "Add", onAction = { adding = true })
+            }
             if (meals.isEmpty()) {
-                Panel { EmptyNote("Nothing logged", emoji = "🥣") }
-            } else {
-                val photos = vm.recipes.associate { it.id to it.photo }
-                Panel(padding = PaddingValues(0.dp)) {
-                    meals.forEachIndexed { i, m ->
-                        MealRow(m, photo = m.recipeId?.let { photos[it] }, onRemove = { vm.removeMeal(m.id) })
-                        if (i < meals.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                item(key = "no-meals", contentType = "empty") { NoMeals(onAdd = { adding = true }) }
+            }
+            items(meals, key = { "meal:${it.id}" }, contentType = { "meal" }) { m ->
+                MealRow(m, onRemove = { vm.removeMeal(m.id); show("Meal removed", undo = m) }, Modifier.animateItem())
+            }
+            item(key = "recipes", contentType = "title") { SectionTitle("Recipes", R.drawable.emoji_curry) }
+            item(key = "search", contentType = "search") { SearchField(query) { query = it } }
+            item(key = "filters", contentType = "filters") {
+                LazyRow(
+                    Modifier.bleed(gutter),
+                    contentPadding = PaddingValues(horizontal = gutter),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item(key = "all", contentType = "chip") { Chip("All", mealType == null, { mealType = null }) }
+                    items(MealTypes, key = { it }, contentType = { "chip" }) { t ->
+                        Chip(
+                            t.replaceFirstChar { it.titlecase() },
+                            mealType == t,
+                            { mealType = if (mealType == t) null else t },
+                            emoji = mealTypeArt(t),
+                        )
+                    }
+                    item(key = "veg", contentType = "chip") {
+                        Chip("Veg", vegOnly, { vegOnly = !vegOnly }, emoji = R.drawable.emoji_seedling)
+                    }
+                    item(key = "protein", contentType = "chip") {
+                        Chip("${HIGH_PROTEIN_G}g+ protein", highProtein, { highProtein = !highProtein }, emoji = R.drawable.emoji_biceps)
                     }
                 }
             }
-        }
-        val featured = vm.recipes.filter { it.photo != null }.sortedByDescending { it.protein }.take(8)
-        if (featured.isNotEmpty()) {
-            item { SectionTitle("💪 Top protein") }
-            item {
-                val px = with(LocalDensity.current) { 240.dp.roundToPx() }
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(featured, key = { it.id }) { r ->
-                        PhotoCard(
-                            r.photo!!, r.name, "${r.protein} g protein · ${r.kcal} kcal", px,
-                            onClick = { vm.recipe = r },
-                            modifier = Modifier.size(width = 240.dp, height = 160.dp),
+            // Recipes load just after launch: "No matches" only once there is something to match.
+            if (recipes.isNotEmpty() && shown.isEmpty()) {
+                item(key = "no-match", contentType = "empty") {
+                    Panel {
+                        EmptyState(
+                            "No matches",
+                            emoji = R.drawable.emoji_bowl,
+                            action = "Clear filters",
+                            onAction = { query = ""; mealType = null; vegOnly = false; highProtein = false },
                         )
                     }
                 }
             }
-        }
-        item { SectionTitle("📖 Recipes") }
-        item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item { Chip("All", mealType == null, { mealType = null }) }
-                items(MealTypes) { t -> Chip("${MealEmoji[t]} ${t.replaceFirstChar { it.uppercase() }}", mealType == t, { mealType = t }) }
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Chip("🌱 Veg", vegOnly, { vegOnly = !vegOnly })
-                Chip("💪 Protein", highProtein, { highProtein = !highProtein })
+            items(shown, key = { "recipe:${it.id}" }, contentType = { "recipe" }) { r ->
+                RecipeCard(r, photoPx) { vm.recipe = r }
             }
         }
-        if (recipes.isEmpty()) {
-            item { Panel { EmptyNote("No matches", emoji = "🔍") } }
-        }
-        items(recipes, key = { it.id }) { r -> RecipeCard(r) { vm.recipe = r } }
-        item {
-            Text(
-                "Values are estimates.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        SnackbarHost(
+            snackbar,
+            Modifier.align(Alignment.BottomCenter).padding(start = gutter, end = gutter, bottom = padding.calculateBottomPadding() + 12.dp),
+        ) { FoodSnackbar(it) }
     }
 
     if (adding) {
-        AddFoodDialog(onAdd = { name, kcal, protein, carbs, fat -> adding = false; vm.logMeal(name, kcal, protein, carbs, fat) }, onDismiss = { adding = false })
+        AddFoodSheet(
+            onAdd = { name, kcal, protein, carbs, fat ->
+                adding = false
+                vm.logMeal(name, kcal, protein, carbs, fat)
+            },
+            onDismiss = { adding = false },
+        )
     }
 }
 
+/** Lets a horizontal list run edge to edge through the page gutter while its first item still lines up with the page. */
+private fun Modifier.bleed(gutter: Dp) = layout { measurable, constraints ->
+    val extra = (gutter * 2).roundToPx()
+    val placeable = measurable.measure(constraints.offset(horizontal = extra))
+    layout(placeable.width - extra, placeable.height) { placeable.place(-extra / 2, 0) }
+}
+
+// ---- Targets ----
+
+/** kcal left (or over, in the warn ink with an icon) on an open arc, eaten and goal beside it, then the macros. */
 @Composable
-private fun TargetsCard(t: Targets, meals: List<Meal>, onEdit: () -> Unit) {
-    val eaten = meals.intake()
+private fun TargetsCard(t: Targets, eaten: Intake, onEdit: () -> Unit, onInfo: () -> Unit) {
+    val n = Nova.colors
+    val colors = MaterialTheme.colorScheme
     val left = t.kcal - eaten.kcal
-    Panel {
+    val over = left < 0
+    HeroPanel {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Ring(eaten.kcal.toFloat() / t.kcal, Modifier.size(132.dp), color = if (left < 0) Tone.warn else Tone.accent, stroke = 12.dp) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${eaten.kcal}", style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"))
-                    Text("of ${t.kcal} kcal", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Emoji(R.drawable.emoji_fire, 24.dp)
+            Spacer(Modifier.width(8.dp))
+            Text("Today", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).semantics { heading() })
+            IconCircleButton(R.drawable.ic_info, "About these numbers", onInfo, container = Color.Transparent, tint = colors.onSurfaceVariant)
+            IconCircleButton(R.drawable.ic_edit, "Edit targets", onEdit, container = Color.Transparent, tint = colors.onSurfaceVariant)
+        }
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Arc(
+                progress = eaten.kcal.toFloat() / t.kcal,
+                color = if (over) n.warn else n.points,
+                size = 128.dp,
+                stroke = 16.dp,
+                contentDescription = if (over) "${-left} kcal over your ${t.kcal} kcal goal" else "$left of ${t.kcal} kcal left",
+            ) {
+                // The number shrinks to fit inside the arc ("+1250" at 320 dp, or with large fonts).
+                Column(Modifier.padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        if (over) "+${-left}" else "$left",
+                        color = if (over) n.warn else colors.onSurface,
+                        autoSize = TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = 36.sp),
+                        maxLines = 1,
+                        style = MaterialTheme.typography.headlineLarge,
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (over) {
+                            Glyph(R.drawable.ic_warning, tint = n.warn, size = 14)
+                            Spacer(Modifier.width(4.dp))
+                        }
+                        Text(
+                            if (over) "over" else "left",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (over) n.warn else colors.onSurfaceVariant,
+                        )
+                    }
                 }
             }
-            Spacer(Modifier.width(18.dp))
+            Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                MacroLine("Protein", eaten.protein, t.protein, Macro.protein)
-                MacroLine("Carbs", eaten.carbs, t.carbs, Macro.carbs)
-                MacroLine("Fat", eaten.fat, t.fat, Macro.fat)
+                KcalStat("Eaten", eaten.kcal)
+                KcalStat("Goal", t.kcal, unit = "kcal")
             }
         }
-        Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (left >= 0) "$left kcal left today" else "${-left} kcal over today",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (left >= 0) MaterialTheme.colorScheme.onSurfaceVariant else Tone.warn,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                "Edit targets",
-                style = MaterialTheme.typography.labelLarge,
-                color = Tone.accent,
-                modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(onClick = onEdit).padding(horizontal = 8.dp, vertical = 6.dp),
-            )
+        Spacer(Modifier.height(16.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            MacroRow("Protein", eaten.protein, t.protein, n.protein)
+            MacroRow("Carbs", eaten.carbs, t.carbs, n.carbs)
+            MacroRow("Fat", eaten.fat, t.fat, n.fat)
         }
     }
 }
 
 @Composable
-private fun MacroLine(label: String, value: Int, target: Int, color: Color) {
-    Column {
+private fun KcalStat(label: String, value: Int, unit: String? = null) {
+    Column(Modifier.semantics(mergeDescendants = true) {}) {
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         Row {
-            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-            Text("$value / $target g", style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("$value", style = MaterialTheme.typography.headlineSmall, maxLines = 1, modifier = Modifier.alignByBaseline())
+            if (unit != null) {
+                Text(
+                    unit,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    modifier = Modifier.alignByBaseline().padding(start = 4.dp),
+                )
+            }
         }
-        Spacer(Modifier.height(5.dp))
+    }
+}
+
+/** Full-width macro line ("Protein · 45 of 120 g") over its meter, so the numbers never wrap at 320 dp. */
+@Composable
+private fun MacroRow(label: String, value: Int, target: Int, color: Color) {
+    Column(Modifier.semantics(mergeDescendants = true) {}) {
+        Row {
+            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1, modifier = Modifier.weight(1f).alignByBaseline())
+            Text("$value", style = MaterialTheme.typography.labelLarge, modifier = Modifier.alignByBaseline())
+            Text(
+                " of $target g",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alignByBaseline(),
+            )
+        }
+        Spacer(Modifier.height(6.dp))
         Meter(value.toFloat() / target.coerceAtLeast(1), color, Modifier.fillMaxWidth())
     }
 }
 
+// ---- Water ----
+
+/** Eight glasses plus −/+. Above eight the glasses stay full, a "+N" shows the rest and only −/+ change the count. */
 @Composable
-private fun MealRow(m: Meal, photo: String?, onRemove: () -> Unit) {
-    val thumbPx = with(LocalDensity.current) { 46.dp.roundToPx() }
-    Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (photo != null) {
-            AssetPhoto(photo, thumbPx, Modifier.size(46.dp).clip(MaterialTheme.shapes.small), m.name)
+private fun WaterCard(glasses: Int, onChange: (Int) -> Unit) {
+    val n = Nova.colors
+    val colors = MaterialTheme.colorScheme
+    Panel {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            EmojiTile(R.drawable.emoji_droplet, tint = n.water, size = 40.dp)
             Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Water", style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${glasses * GLASS_ML} ml", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1)
+            }
+            IconCircleButton(R.drawable.ic_minus, "Remove a glass", onClick = { onChange(-1) }, enabled = glasses > 0)
+            Row(
+                Modifier.widthIn(min = 48.dp).clearAndSetSemantics {
+                    contentDescription = "$glasses of $WATER_GOAL glasses"
+                    liveRegion = LiveRegionMode.Polite
+                },
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Text("$glasses", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.alignByBaseline())
+                Text("/$WATER_GOAL", style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant, modifier = Modifier.alignByBaseline())
+            }
+            IconCircleButton(
+                R.drawable.ic_plus,
+                "Add a glass of water",
+                onClick = { onChange(1) },
+                container = n.water.copy(alpha = 0.14f),
+                enabled = glasses < WATER_MAX,
+            )
         }
-        Column(Modifier.weight(1f)) {
-            Text(m.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("${m.protein} g protein · ${m.carbs} g carbs · ${m.fat} g fat", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Text("${m.kcal} kcal", style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
-        Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onRemove), contentAlignment = Alignment.Center) {
-            Glyph(R.drawable.ic_close, size = 16, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            for (i in 1..WATER_GOAL) {
+                Glass(
+                    index = i,
+                    filled = i <= glasses,
+                    enabled = glasses <= WATER_GOAL,
+                    onClick = { onChange(tapGlass(glasses, i) - glasses) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            if (glasses > WATER_GOAL) Tag("+${glasses - WATER_GOAL}", tone = n.water, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }
 
+/** A drawn glass that fills from the bottom; the fill animates in the draw phase. */
 @Composable
-private fun VegMark(veg: Boolean) {
-    // Indian-style food mark: green square-dot for veg, red for non-veg.
-    val c = if (veg) VegGreen else NonVegRed
-    Box(Modifier.size(16.dp).clip(MaterialTheme.shapes.extraSmall).background(c.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(7.dp).clip(CircleShape).background(c))
+private fun Glass(index: Int, filled: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val water = Nova.colors.water
+    val edge = MaterialTheme.colorScheme.outline
+    val level = animateFloatAsState(if (filled) 1f else 0f, tween(200), label = "glass")
+    Spacer(
+        modifier
+            .height(48.dp)
+            .clickable(
+                interactionSource = null,
+                indication = ripple(bounded = false, radius = 22.dp),
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics {
+                contentDescription = "Glass $index of $WATER_GOAL, $GLASS_ML ml"
+                stateDescription = if (filled) "Full" else "Empty"
+            }
+            .drawWithCache {
+                val w = minOf(size.width - 6.dp.toPx(), 22.dp.toPx())
+                val h = w * 1.36f
+                val x = (size.width - w) / 2f
+                val y = (size.height - h) / 2f
+                val taper = w * 0.14f
+                val glass = Path().apply {
+                    moveTo(x, y)
+                    lineTo(x + w, y)
+                    lineTo(x + w - taper, y + h)
+                    lineTo(x + taper, y + h)
+                    close()
+                }
+                val rim = Stroke(1.5.dp.toPx(), join = StrokeJoin.Round)
+                val bottom = y + h
+                val fullDepth = h * 0.8f
+                onDrawBehind {
+                    val l = level.value
+                    if (l > 0f) clipRect(top = bottom - fullDepth * l) { drawPath(glass, water) }
+                    drawPath(glass, if (l > 0.5f) water else edge, style = rim)
+                }
+            },
+    )
+}
+
+// ---- Meals ----
+
+@Composable
+private fun MealRow(m: Meal, onRemove: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val art = remember(m.name) { foodArt(m.name).res }
+    Panel(modifier, padding = PaddingValues(start = 12.dp, top = 8.dp, end = 4.dp, bottom = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+                EmojiTile(art, size = 44.dp)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(m.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(color = colors.onSurface, fontWeight = FontWeight.SemiBold)) { append("${m.kcal} kcal") }
+                            append(" · P${m.protein} C${m.carbs} F${m.fat}")
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.semantics {
+                            contentDescription = "${m.kcal} kcal, ${m.protein} g protein, ${m.carbs} g carbs, ${m.fat} g fat"
+                        },
+                    )
+                }
+            }
+            IconCircleButton(R.drawable.ic_trash, "Remove ${m.name}", onRemove, container = Color.Transparent, tint = colors.onSurfaceVariant)
+        }
     }
 }
 
+/** Empty meal log: a salad between an avocado and an apple, and one line. Tapping it adds a food. */
 @Composable
-private fun RecipeCard(r: Recipe, onClick: () -> Unit) {
-    val thumbPx = with(LocalDensity.current) { 92.dp.roundToPx() }
+private fun NoMeals(onAdd: () -> Unit) {
+    Panel(onClick = onAdd) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(width = 140.dp, height = 72.dp)) {
+                EmojiTile(R.drawable.emoji_avocado, size = 52.dp, modifier = Modifier.align(Alignment.BottomStart).rotate(-10f))
+                EmojiTile(R.drawable.emoji_apple, size = 52.dp, modifier = Modifier.align(Alignment.BottomEnd).rotate(10f))
+                EmojiTile(R.drawable.emoji_salad, size = 68.dp, modifier = Modifier.align(Alignment.TopCenter))
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("No meals yet", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+// ---- Recipes ----
+
+@Composable
+private fun SearchField(query: String, onChange: (String) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val focus = LocalFocusManager.current
+    OutlinedTextField(
+        value = query,
+        onValueChange = { onChange(it.take(40)) },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text("Search recipes", maxLines = 1) },
+        leadingIcon = { Glyph(R.drawable.ic_search, tint = colors.onSurfaceVariant) },
+        trailingIcon = if (query.isEmpty()) {
+            null
+        } else {
+            { IconCircleButton(R.drawable.ic_close, "Clear search", { onChange("") }, container = Color.Transparent, tint = colors.onSurfaceVariant) }
+        },
+        singleLine = true,
+        shape = MaterialTheme.shapes.medium,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+    )
+}
+
+/** Photo, name, veg mark, meal and time, then kcal and protein tags that wrap rather than clip on narrow phones. */
+@Composable
+private fun RecipeCard(r: Recipe, photoPx: Int, onClick: () -> Unit) {
     Panel(onClick = onClick, padding = PaddingValues(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (r.photo != null) {
-                AssetPhoto(r.photo, thumbPx, Modifier.size(92.dp).clip(MaterialTheme.shapes.medium), r.name)
+            val photo = r.photo
+            if (photo != null) {
+                AssetPhoto(photo, photoPx, Modifier.size(RecipePhoto).clip(MaterialTheme.shapes.medium))
             } else {
-                MacroDonut(r.protein, r.carbs, r.fat, Modifier.size(58.dp), stroke = 6.dp) {
-                    Text("${r.kcal}", style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
-                }
+                EmojiTile(remember(r.name) { foodArt(r.name).res }, size = RecipePhoto)
             }
-            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(r.name, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     VegMark(r.veg)
-                    Spacer(Modifier.width(8.dp))
-                    Text(r.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    "${r.meal.replaceFirstChar { it.uppercase() }} · ${r.minutes} min",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Tag("${r.kcal} kcal")
-                    Tag("${r.protein} g protein", Macro.protein)
-                }
-            }
-            Glyph(R.drawable.ic_chevron, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-fun RecipeSheet(r: Recipe, onLog: () -> Unit, onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        // Scrollable body with the "Log" button pinned below it, so it's always one tap away.
-        Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
-        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
-            if (r.photo != null) {
-                val heroPx = with(LocalDensity.current) { 360.dp.roundToPx() }
-                AssetPhoto(r.photo, heroPx, Modifier.fillMaxWidth().height(210.dp).clip(MaterialTheme.shapes.large), r.name)
-                r.photoCredit?.let { credit ->
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        "📷 $credit",
-                        style = MaterialTheme.typography.labelSmall,
+                        "${r.meal.replaceFirstChar { it.titlecase() }} · ${r.minutes} min",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .padding(top = 6.dp)
-                            .clickable(enabled = r.photoPage != null) {
-                                r.photoPage?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) }
-                            },
                     )
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Tag("${r.kcal} kcal")
+                    Tag("${r.protein}g protein", tone = Nova.colors.protein)
+                }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                VegMark(r.veg)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "${r.meal.replaceFirstChar { it.uppercase() }} · ${r.cuisine} · ${r.minutes} min · serves ${r.servings}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.height(6.dp))
-            Text(r.name, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(18.dp))
+        }
+    }
+}
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                MacroDonut(r.protein, r.carbs, r.fat, Modifier.size(112.dp), stroke = 10.dp) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("${r.kcal}", style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"))
-                        Text("kcal", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+/**
+ * Indian food mark: a square with a dot (veg, green) or a triangle (non-veg, red), so it never relies on colour
+ * alone. TalkBack reads it unless [described] is false (when a word next to it already says it).
+ */
+@Composable
+internal fun VegMark(veg: Boolean, described: Boolean = true, modifier: Modifier = Modifier) {
+    val color = if (veg) Nova.colors.good else Nova.colors.bad
+    Spacer(
+        modifier
+            .size(16.dp)
+            .then(if (described) Modifier.semantics { contentDescription = if (veg) "Vegetarian" else "Non-vegetarian" } else Modifier)
+            .drawWithCache {
+                val rim = Stroke(1.5.dp.toPx())
+                val w = size.width
+                val h = size.height
+                val corner = CornerRadius(3.dp.toPx())
+                val mark = Path().apply {
+                    if (veg) {
+                        addOval(Rect(Offset(w / 2f, h / 2f), w * 0.22f))
+                    } else {
+                        moveTo(w / 2f, h * 0.27f)
+                        lineTo(w * 0.76f, h * 0.72f)
+                        lineTo(w * 0.24f, h * 0.72f)
+                        close()
                     }
                 }
-                Spacer(Modifier.width(20.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Legend("Protein", "${r.protein} g", Macro.protein)
-                    Legend("Carbs", "${r.carbs} g", Macro.carbs)
-                    Legend("Fat", "${r.fat} g", Macro.fat)
-                    Legend("Fiber", "${r.fiber} g", MaterialTheme.colorScheme.onSurfaceVariant)
+                val inset = rim.width / 2f
+                onDrawBehind {
+                    drawRoundRect(color, Offset(inset, inset), Size(w - rim.width, h - rim.width), corner, style = rim)
+                    drawPath(mark, color)
                 }
-            }
-            if (r.tags.isNotEmpty() || r.allergens.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    r.tags.forEach { Tag(it.replace('-', ' '), Tone.accent) }
-                    r.allergens.forEach { Tag("Contains $it", Tone.warn) }
-                }
-            }
-
-            Spacer(Modifier.height(22.dp))
-            Text("Ingredients", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            r.ingredients.forEach { item ->
-                Row(Modifier.padding(vertical = 4.dp)) {
-                    Box(Modifier.padding(top = 9.dp).size(5.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSurfaceVariant))
-                    Spacer(Modifier.width(10.dp))
-                    Text(item, style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-
-            Spacer(Modifier.height(18.dp))
-            Text("Steps", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            r.steps.forEachIndexed { i, step ->
-                Row(Modifier.padding(vertical = 6.dp)) {
-                    Box(
-                        Modifier.size(26.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center,
-                    ) { Text("${i + 1}", style = MaterialTheme.typography.labelMedium) }
-                    Spacer(Modifier.width(12.dp))
-                    Text(step, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 2.dp))
-                }
-            }
-            if (r.source.startsWith("http")) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "🔗 ${Uri.parse(r.source).host?.removePrefix("www.") ?: "Source"}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Tone.accent,
-                    modifier = Modifier
-                        .clip(MaterialTheme.shapes.small)
-                        .clickable { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(r.source))) }
-                        .padding(vertical = 6.dp),
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-        }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(Modifier.height(14.dp))
-            PrimaryButton("Log 1 serving · ${r.kcal} kcal", onClick = onLog)
-        }
-    }
+            },
+    )
 }
 
 @Composable
-private fun Legend(label: String, value: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(10.dp).clip(CircleShape).background(color))
-        Spacer(Modifier.width(8.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(64.dp))
-        Text(value, style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"))
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BodySheet(current: Body?, onSave: (Body) -> Unit, onDismiss: () -> Unit) {
-    var sex by remember { mutableStateOf(current?.sex ?: Sex.MALE) }
-    var age by remember { mutableStateOf(current?.age?.toString() ?: "") }
-    var height by remember { mutableStateOf(current?.heightCm?.toString() ?: "") }
-    var weight by remember { mutableStateOf(current?.weightKg?.toString() ?: "") }
-    var activity by remember { mutableStateOf(current?.activity ?: Activity.MODERATE) }
-    var goal by remember { mutableStateOf(current?.goal ?: Goal.MAINTAIN) }
-    val a = age.toIntOrNull()
-    val h = height.toIntOrNull()
-    val w = weight.toIntOrNull()
-    val valid = a in 13..100 && h in 120..230 && w in 30..250
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Your body & goal", style = MaterialTheme.typography.headlineSmall)
-            Text("Stays on this phone.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Segmented(Sex.entries.map { it.label }, Sex.entries.indexOf(sex), { sex = Sex.entries[it] })
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                NumberField("Age", age, { age = it }, "years")
-                NumberField("Height", height, { height = it }, "cm")
-                NumberField("Weight", weight, { weight = it }, "kg")
-            }
-            Text("Activity", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Segmented(Activity.entries.map { it.label }, Activity.entries.indexOf(activity), { activity = Activity.entries[it] })
-            Text("Goal", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Segmented(Goal.entries.map { it.label }, Goal.entries.indexOf(goal), { goal = Goal.entries[it] })
-            PrimaryButton("Save targets", enabled = valid, onClick = { onSave(Body(sex, a!!, h!!, w!!, activity, goal)) })
-        }
-    }
-}
-
-@Composable
-private fun RowScope.NumberField(label: String, value: String, onChange: (String) -> Unit, suffix: String) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = { v -> onChange(v.filter { it.isDigit() }.take(3)) },
-        label = { Text(label) },
-        suffix = { Text(suffix, style = MaterialTheme.typography.bodySmall) },
-        singleLine = true,
+private fun FoodSnackbar(data: SnackbarData) {
+    val colors = MaterialTheme.colorScheme
+    val label = data.visuals.actionLabel
+    Snackbar(
+        action = if (label == null) {
+            null
+        } else {
+            { TextButton(onClick = data::performAction) { Text(label, style = MaterialTheme.typography.labelLarge, color = colors.inversePrimary) } }
+        },
         shape = MaterialTheme.shapes.medium,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.weight(1f),
-    )
-}
-
-@Composable
-private fun AddFoodDialog(onAdd: (String, Int, Int, Int, Int) -> Unit, onDismiss: () -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var kcal by remember { mutableStateOf("") }
-    var protein by remember { mutableStateOf("") }
-    var carbs by remember { mutableStateOf("") }
-    var fat by remember { mutableStateOf("") }
-    val k = kcal.toIntOrNull()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.extraLarge,
-        title = { Text("Add food") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(name, { name = it.take(40) }, label = { Text("Name") }, singleLine = true, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("Calories", kcal, { kcal = it }, "kcal")
-                    NumberField("Protein", protein, { protein = it }, "g")
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("Carbs", carbs, { carbs = it }, "g")
-                    NumberField("Fat", fat, { fat = it }, "g")
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = name.isNotBlank() && k != null,
-                onClick = { onAdd(name.trim(), k!!, protein.toIntOrNull() ?: 0, carbs.toIntOrNull() ?: 0, fat.toIntOrNull() ?: 0) },
-            ) { Text("Add") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
-}
-
-/** Eight glasses: tap one to set the count (tap the last filled one to undo it). */
-@Composable
-private fun WaterCard(glasses: Int, onSet: (Int) -> Unit) {
-    Panel(padding = PaddingValues(horizontal = 18.dp, vertical = 14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("💧 Water", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Text("$glasses / 8", style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"), color = WaterBlue)
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (i in 1..8) {
-                val filled = i <= glasses
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(34.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(if (filled) WaterBlue else MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onSet(if (i == glasses) i - 1 else i) },
-                )
-            }
-        }
-    }
+        containerColor = colors.inverseSurface,
+        contentColor = colors.inverseOnSurface,
+    ) { Text(data.visuals.message, style = MaterialTheme.typography.labelLarge) }
 }

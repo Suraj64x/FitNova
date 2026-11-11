@@ -602,4 +602,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Text for a failed request; anything but an [ApiException] is a malformed response or a bug, not something to show raw. */
     private fun Exception.userMessage() = (this as? ApiException)?.message ?: "Something went wrong"
+
+    // region food
+    /** Puts back a meal removed by mistake (Undo on the Food tab), with its own id, day and time. */
+    fun restoreMeal(m: Meal) {
+        viewModelScope.launch { Graph.meals.add(m) }
+    }
+    // endregion
 }

@@ -162,6 +162,16 @@ class RingActivity : ComponentActivity() {
         return (volume && morning == null) || super.onKeyDown(keyCode, event)
     }
 
+    override fun onResume() {
+        super.onResume()
+        RingService.screenVisible(this, true)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (!finishing) RingService.screenVisible(this, false)
+    }
+
     private fun calm() {
         startService(Intent(this, RingService::class.java).setAction(RingService.CALM))
     }

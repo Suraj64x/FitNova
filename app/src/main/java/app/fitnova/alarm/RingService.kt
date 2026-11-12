@@ -201,14 +201,25 @@ class RingService : Service() {
             c.stopService(Intent(c, RingService::class.java))
         }
 
-        private fun notification(c: Context, r: Ring): Notification {
+        /**
+         * The ring screen came to the front ([visible]) or left. While it is in front the alarm notification moves to a
+         * quiet channel without a full-screen intent, so its sticky heads-up doesn't cover the rep counter; when the
+         * screen leaves without finishing, the loud one comes back so the way back stays one tap away.
+         */
+        fun screenVisible(c: Context, visible: Boolean) {
+            val r = _ringing.value ?: return
+            ensureChannels(c)
+            runCatching { c.getSystemService(NotificationManager::class.java).notify(RING_ID, notification(c, r, quiet = visible)) }
+        }
+
+        private fun notification(c: Context, r: Ring, quiet: Boolean = false): Notification {
             val open = PendingIntent.getActivity(
                 c,
                 r.id.hashCode(),
                 r.into(Intent(c, RingActivity::class.java)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            val b = Notification.Builder(c, CH_ALARM)
+            val b = Notification.Builder(c, if (quiet) CH_RINGING else CH_ALARM)
                 .setSmallIcon(R.drawable.ic_alarm)
                 .setColor(BRAND)
                 .setContentTitle(listOf(r.time, r.label).filter { it.isNotBlank() }.joinToString(" · "))
@@ -217,7 +228,8 @@ class RingService : Service() {
                 .setVisibility(Notification.VISIBILITY_PUBLIC) // nothing personal in it
                 .setOngoing(true)
                 .setContentIntent(open)
-                .setFullScreenIntent(open, true)
+            if (!quiet) b.setFullScreenIntent(open, true)
+            b
                 // Android 14+ lets people swipe ongoing notifications away while unlocked: put it straight back.
                 .setDeleteIntent(PendingIntent.getService(c, 0, Intent(c, RingService::class.java), PendingIntent.FLAG_IMMUTABLE))
                 .addAction(Notification.Action.Builder(null, "Start", open).build())

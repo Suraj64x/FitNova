@@ -167,7 +167,8 @@ fun WeekBars(
 ) {
     val c = Nova.colors
     val colors = MaterialTheme.colorScheme
-    val past = colors.onSurfaceVariant
+    // Past days in a soft tint of the series colour (values are labelled above), today in full colour.
+    val past = color.copy(alpha = 0.45f)
     val nova = colors.primary
     val max = maxOf(week.maxOfOrNull { it.points } ?: 0, goal ?: 0).coerceAtLeast(1)
     val grow = remember { Animatable(0f) }

@@ -33,6 +33,9 @@ import java.util.Date
 
 internal const val CH_ALARM = "alarm"
 internal const val CH_REMIND = "remind"
+
+/** The same ringing alarm while its ring screen is in front: no heads-up covering the challenge. */
+internal const val CH_RINGING = "ringing"
 internal const val BRAND = 0xFF534EF5.toInt()
 
 /** Snoozes allowed per ring, and how long each lasts. */
@@ -59,7 +62,7 @@ internal fun BroadcastReceiver.background(work: suspend () -> Unit) {
     }
 }
 
-/** Both channels; idempotent, so every path that may post calls it first. */
+/** All channels; idempotent, so every path that may post calls it first. */
 internal fun ensureChannels(c: Context) = c.getSystemService(NotificationManager::class.java).createNotificationChannels(
     listOf(
         NotificationChannel(CH_ALARM, "Wake-up alarms", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -68,6 +71,7 @@ internal fun ensureChannels(c: Context) = c.getSystemService(NotificationManager
             setShowBadge(false)
         },
         NotificationChannel(CH_REMIND, "Reminders", NotificationManager.IMPORTANCE_DEFAULT),
+        NotificationChannel(CH_RINGING, "Alarm in progress", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) },
     ),
 )
 

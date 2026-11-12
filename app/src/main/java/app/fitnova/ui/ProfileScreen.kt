@@ -25,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fitnova.AppViewModel
 import app.fitnova.BuildConfig
@@ -177,13 +179,19 @@ private fun ProfileHero(name: String?, stats: Stats) {
     }
 }
 
-/** Number-first stat, centred so a 3-up row fits 320 dp screens (a StatTile label row would cut off). */
+/** Number-first stat, centred so a 3-up row fits 320 dp screens (a StatTile label row would cut off). The number shrinks to fit. */
 @Composable
 private fun HeroStat(@DrawableRes emoji: Int, value: String, label: String, modifier: Modifier) {
+    val type = MaterialTheme.typography
     Column(modifier.semantics(mergeDescendants = true) {}, horizontalAlignment = Alignment.CenterHorizontally) {
         EmojiTile(emoji, size = 40.dp)
         Spacer(Modifier.height(8.dp))
-        Text(value, style = MaterialTheme.typography.headlineSmall, maxLines = 1)
+        Text(
+            value,
+            style = type.headlineSmall,
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = type.labelLarge.fontSize, maxFontSize = type.headlineSmall.fontSize, stepSize = 1.sp),
+        )
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,

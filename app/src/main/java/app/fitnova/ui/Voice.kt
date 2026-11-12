@@ -5,6 +5,8 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.compose.runtime.Composable
@@ -12,6 +14,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
+import kotlin.concurrent.thread
 
 /**
  * The voice coach: counts, holds, form cues and rest calls over the phone's own TextToSpeech, so it works
@@ -32,6 +35,7 @@ class Voice(context: Context) {
         .setAudioAttributes(attributes)
         .build()
 
+    private val main = Handler(Looper.getMainLooper())
     private var tts: TextToSpeech? = null
     private var ready = false
     private var failed = false
@@ -43,24 +47,31 @@ class Voice(context: Context) {
         if (tts == null && !failed) tts = TextToSpeech(app, ::onInit)
     }
 
-    // An error can arrive inside the TextToSpeech constructor, before [tts] is set.
+    // Runs on the main thread. An error can arrive inside the TextToSpeech constructor, before [tts] is set.
     private fun onInit(status: Int) {
         val t = tts
         if (status != TextToSpeech.SUCCESS || t == null) return fail()
-        val english = listOf(Locale.US, Locale.ENGLISH).any { runCatching { t.setLanguage(it) }.getOrDefault(-2) >= TextToSpeech.LANG_AVAILABLE }
-        if (!english) return fail()
-        t.setAudioAttributes(attributes)
-        t.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) = Unit
-            override fun onDone(utteranceId: String?) = finished(utteranceId)
-            override fun onStop(utteranceId: String?, interrupted: Boolean) = finished(utteranceId)
+        // setLanguage is a chain of blocking calls into the engine (one returns its whole voice list), so it runs
+        // off the main thread; the rest comes back to main, where ready and pending live.
+        thread(name = "voice-init") {
+            val english = listOf(Locale.US, Locale.ENGLISH).any { runCatching { t.setLanguage(it) }.getOrDefault(-2) >= TextToSpeech.LANG_AVAILABLE }
+            main.post {
+                if (tts !== t) return@post // shut down meanwhile
+                if (!english) return@post fail()
+                t.setAudioAttributes(attributes)
+                t.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) = Unit
+                    override fun onDone(utteranceId: String?) = finished(utteranceId)
+                    override fun onStop(utteranceId: String?, interrupted: Boolean) = finished(utteranceId)
 
-            @Suppress("OVERRIDE_DEPRECATION")
-            override fun onError(utteranceId: String?) = finished(utteranceId)
-        })
-        ready = true
-        pending?.let { speak(it, TextToSpeech.QUEUE_FLUSH, LINE) }
-        pending = null
+                    @Suppress("OVERRIDE_DEPRECATION")
+                    override fun onError(utteranceId: String?) = finished(utteranceId)
+                })
+                ready = true
+                pending?.let { speak(it, TextToSpeech.QUEUE_FLUSH, LINE) }
+                pending = null
+            }
+        }
     }
 
     private fun fail() {

@@ -20,7 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -153,7 +152,7 @@ internal fun ReminderTimeDialog(minuteOfDay: Int, onPick: (Int) -> Unit, onDismi
             TextButton(onClick = onDismiss) { Text("Cancel", style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant) }
         },
         title = { Text("Reminder time", style = MaterialTheme.typography.titleLarge) },
-        text = { TimePicker(state) },
+        text = { TimeField(state) }, // not a bare TimePicker: it clips its digits with our display styles
         shape = MaterialTheme.shapes.extraLarge,
         containerColor = colors.surfaceContainerHigh,
         tonalElevation = 0.dp,

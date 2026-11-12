@@ -27,6 +27,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.fitnova.R
 import app.fitnova.domain.Category
 import app.fitnova.domain.Exercise
@@ -622,9 +624,13 @@ fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit, mod
 
 // ---- Numbers and people ----
 
-/** Number-first card: optional emoji and label, one big tabular number, a small unit. Read as one item. */
+/**
+ * Number-first card: optional emoji and label, one big tabular number, a small unit. Read as one item. The number
+ * shrinks to fit (3-up on 320 dp, large fonts) rather than being cut to a wrong value.
+ */
 @Composable
 fun StatTile(label: String, value: String, modifier: Modifier = Modifier, unit: String? = null, @DrawableRes emoji: Int? = null) {
+    val type = MaterialTheme.typography
     Panel(modifier.semantics(mergeDescendants = true) {}) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (emoji != null) {
@@ -641,7 +647,14 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier, unit: 
         }
         Spacer(Modifier.height(8.dp))
         Row {
-            Text(value, style = MaterialTheme.typography.headlineSmall, maxLines = 1, modifier = Modifier.alignByBaseline())
+            // weight(fill = false) measures the unit first, so the number shrinks into what is left instead of pushing it out.
+            Text(
+                value,
+                style = type.headlineSmall,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = type.labelLarge.fontSize, maxFontSize = type.headlineSmall.fontSize, stepSize = 1.sp),
+                modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+            )
             if (unit != null) {
                 Text(
                     unit,

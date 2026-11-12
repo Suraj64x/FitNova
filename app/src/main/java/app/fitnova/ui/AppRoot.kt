@@ -35,6 +35,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -155,7 +156,7 @@ private fun Tabs(vm: AppViewModel, state: SaveableStateHolder, snackbar: Snackba
                     when (tab) {
                         Tab.HOME -> HomeScreen(vm, padding)
                         Tab.TRAIN -> TrainScreen(vm, padding)
-                        Tab.FOOD -> FoodScreen(vm, padding)
+                        Tab.FOOD -> FoodScreen(vm, padding, snackbar)
                         Tab.SLEEP -> SleepScreen(vm, padding)
                         Tab.RANKS -> RanksScreen(vm, padding)
                     }
@@ -241,21 +242,34 @@ private fun RowScope.BarItem(item: TabItem, selected: Boolean, onClick: () -> Un
     }
 }
 
-/** Flat snackbar (no shadow): inverseSurface, medium shape, labelLarge. The host makes it a polite live region. */
+/**
+ * Flat snackbar (no shadow): inverseSurface, medium shape, labelLarge, plus its action if it has one (Food's Undo).
+ * Every message goes through this one state, so two are never drawn over each other. The host makes it a polite
+ * live region.
+ */
 @Composable
 private fun MessageHost(state: SnackbarHostState, modifier: Modifier) {
     SnackbarHost(state, modifier) { data ->
         val colors = MaterialTheme.colorScheme
-        Text(
-            data.visuals.message,
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.inverseOnSurface,
-            modifier = Modifier
+        val action = data.visuals.actionLabel
+        Row(
+            Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .background(colors.inverseSurface, MaterialTheme.shapes.medium)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-        )
+                .padding(start = 16.dp, end = if (action == null) 16.dp else 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                data.visuals.message,
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.inverseOnSurface,
+                modifier = Modifier.weight(1f).padding(vertical = 14.dp),
+            )
+            if (action != null) {
+                TextButton(onClick = data::performAction) { Text(action, style = MaterialTheme.typography.labelLarge, color = colors.inversePrimary) }
+            }
+        }
     }
 }
 

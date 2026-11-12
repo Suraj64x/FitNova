@@ -27,14 +27,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -128,8 +124,9 @@ internal val FoodArt.res: Int
         FoodArt.PLATE -> R.drawable.emoji_plate
     }
 
+/** [snackbar] is the app-wide message host, so Undo shows there rather than under (or over) another message. */
 @Composable
-fun FoodScreen(vm: AppViewModel, padding: PaddingValues) {
+fun FoodScreen(vm: AppViewModel, padding: PaddingValues, snackbar: SnackbarHostState) {
     val meals by vm.meals.collectAsStateWithLifecycle()
     val body = vm.body
     val goal = remember(body) { body?.let(::targets) }
@@ -142,12 +139,11 @@ fun FoodScreen(vm: AppViewModel, padding: PaddingValues) {
     var adding by rememberSaveable { mutableStateOf(false) }
     val recipes = vm.recipes
     val shown = remember(recipes, query, mealType, vegOnly, highProtein) { filterRecipes(recipes, query, mealType, vegOnly, highProtein) }
-    val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val gutter = if (LocalWindowInfo.current.containerDpSize.width >= 400.dp) 20.dp else 16.dp
     val photoPx = with(LocalDensity.current) { RecipePhoto.roundToPx() }
 
-    // Food keeps its own snackbar: the app-wide one has no action button, and Undo needs one.
+    // Replaces whatever is up at once; app messages that arrive meanwhile wait their turn behind it.
     fun show(text: String, undo: Meal? = null) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
@@ -238,10 +234,6 @@ fun FoodScreen(vm: AppViewModel, padding: PaddingValues) {
                 RecipeCard(r, photoPx) { vm.recipe = r }
             }
         }
-        SnackbarHost(
-            snackbar,
-            Modifier.align(Alignment.BottomCenter).padding(start = gutter, end = gutter, bottom = padding.calculateBottomPadding() + 12.dp),
-        ) { FoodSnackbar(it) }
     }
 
     if (adding) {
@@ -600,20 +592,4 @@ internal fun VegMark(veg: Boolean, described: Boolean = true, modifier: Modifier
                 }
             },
     )
-}
-
-@Composable
-private fun FoodSnackbar(data: SnackbarData) {
-    val colors = MaterialTheme.colorScheme
-    val label = data.visuals.actionLabel
-    Snackbar(
-        action = if (label == null) {
-            null
-        } else {
-            { TextButton(onClick = data::performAction) { Text(label, style = MaterialTheme.typography.labelLarge, color = colors.inversePrimary) } }
-        },
-        shape = MaterialTheme.shapes.medium,
-        containerColor = colors.inverseSurface,
-        contentColor = colors.inverseOnSurface,
-    ) { Text(data.visuals.message, style = MaterialTheme.typography.labelLarge) }
 }

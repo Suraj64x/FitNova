@@ -71,31 +71,38 @@ class Api(private val session: SessionStore) {
 
     suspend fun pushWorkouts(workouts: List<Workout>) {
         val owner = session.userId ?: throw ApiException(401, "Sign in to sync")
+        val now = System.currentTimeMillis()
         val rows = JSONArray()
         for (w in workouts) {
+            // Kept inside the table's CHECKs: one row out of range fails the whole upsert, so nothing would sync again.
+            // The pull right after brings the clamped row back, so phone and server agree.
             rows.put(
                 JSONObject()
                     .put("id", w.id)
                     .put("owner", owner)
                     .put("exercise", w.exercise.id)
-                    .put("reps", w.reps)
-                    .put("seconds", w.seconds)
-                    .put("form_score", w.form)
+                    .put("reps", w.reps.coerceIn(0, 1000))
+                    .put("seconds", w.seconds.coerceIn(0, 7200))
+                    .put("form_score", w.form.coerceIn(0, 100))
                     .put("tracked", w.tracked)
-                    .put("started_at", Instant.ofEpochMilli(w.startedAt).toString()),
+                    // Nothing starts in the future; this heals rows saved while the clock was set ahead.
+                    .put("started_at", Instant.ofEpochMilli(w.startedAt.coerceAtMost(now)).toString()),
             )
         }
         authed("POST", "/rest/v1/fn_workouts?on_conflict=id", rows.toString(), UPSERT)
     }
 
-    /** Up to 1,000 rows, so the parse runs on IO too. */
-    suspend fun pullWorkouts(): List<Workout> = withContext(Dispatchers.IO) {
+    /** The newest 1,000 rows (so the parse runs on IO too), and whether that is the whole history: fewer came back. */
+    suspend fun pullWorkouts(): Pair<List<Workout>, Boolean> = withContext(Dispatchers.IO) {
         val text = authed(
             "GET",
-            "/rest/v1/fn_workouts?select=id,exercise,reps,seconds,form_score,tracked,started_at&order=started_at.desc&limit=1000",
+            "/rest/v1/fn_workouts?select=id,exercise,reps,seconds,form_score,tracked,started_at&order=started_at.desc&limit=$PULL_LIMIT",
             null,
         )
         val rows = JSONArray(text)
+        // Counted before unknown exercises are dropped, or a full page could pass for the whole history.
+        // ponytail: assumes the server's max rows (Supabase default 1,000) isn't set lower; else use Prefer: count=exact.
+        val complete = rows.length() < PULL_LIMIT
         (0 until rows.length()).mapNotNull { i ->
             val o = rows.getJSONObject(i)
             val exercise = Exercise.of(o.getString("exercise")) ?: return@mapNotNull null
@@ -109,7 +116,7 @@ class Api(private val session: SessionStore) {
                 startedAt = OffsetDateTime.parse(o.getString("started_at")).toInstant().toEpochMilli(),
                 synced = true,
             )
-        }
+        } to complete
     }
 
     /** Row-level security limits this to the caller's own rows. */
@@ -246,5 +253,6 @@ class Api(private val session: SessionStore) {
 
     private companion object {
         const val UPSERT = "resolution=merge-duplicates,return=minimal"
+        const val PULL_LIMIT = 1000
     }
 }

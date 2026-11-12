@@ -7,9 +7,11 @@ import android.app.job.JobService
 import android.content.ComponentName
 import android.content.Context
 import app.fitnova.Graph
+import app.fitnova.domain.Workout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,10 +34,20 @@ class Sync(private val store: WorkoutStore, private val api: Api, private val se
     private val lock = Mutex()
 
     /**
-     * Uploads pending workouts, then pulls the account's history. Returns false when it should be retried later.
+     * Uploads pending workouts, then pulls the account's history and drops rows deleted on another device.
+     * Returns false when it should be retried later.
      * Runs on IO (JSON, Keystore and disk work) and never throws, except to cancel.
      */
     suspend fun run(): Boolean = withContext(Dispatchers.IO) { lock.withLock { runLocked() } }
+
+    /**
+     * Ends the session at once (the UI and any new sync see a guest), then drops the account's rows only after a running
+     * sync is done, so a pull already on the wire can't put them back. Not cancellable: leaving the app mid-wait must not skip it.
+     */
+    suspend fun signOut() = withContext(NonCancellable) {
+        session.clear()
+        lock.withLock { store.clearSynced() }
+    }
 
     private suspend fun runLocked(): Boolean {
         if (!session.signedIn) {
@@ -52,7 +64,9 @@ class Sync(private val store: WorkoutStore, private val api: Api, private val se
             }
             // Write only new or changed rows: rewriting the whole history every time is slow on cheap storage.
             val known = store.all.value.associateBy { it.id }
-            store.save(api.pullWorkouts().filter { known[it.id] != it })
+            val (pulled, complete) = api.pullWorkouts()
+            store.save(pulled.filter { known[it.id] != it })
+            store.deleteSynced(deletedRemotely(known.values, pulled, complete))
             _state.value = SyncState.Done(System.currentTimeMillis())
             true
         } catch (e: CancellationException) {
@@ -68,6 +82,18 @@ class Sync(private val store: WorkoutStore, private val api: Api, private val se
             true
         }
     }
+}
+
+/**
+ * Ids of [local] synced workouts the server no longer returns, i.e. deleted on another device. Unsynced rows are never
+ * picked. Unless [pulled] is the [complete] history, it only covers rows newer than its oldest one (a tie at that edge
+ * may sit just past the page cut), so older history stays.
+ */
+fun deletedRemotely(local: Collection<Workout>, pulled: List<Workout>, complete: Boolean): List<String> {
+    // A full page with nothing this version can read gives no window to compare against.
+    val floor = if (complete) Long.MIN_VALUE else pulled.minOfOrNull { it.startedAt } ?: return emptyList()
+    val ids = pulled.mapTo(HashSet()) { it.id }
+    return local.filter { it.synced && it.id !in ids && it.startedAt > floor }.map { it.id }
 }
 
 /** Background retry: Android runs this once there is a network, even if the app is closed. */

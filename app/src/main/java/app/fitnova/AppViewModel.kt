@@ -559,11 +559,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun signOut() {
-        viewModelScope.launch {
-            Graph.session.clear() // the session collector in init resets the account state
-            Graph.store.clearSynced()
-            auth = AuthState()
-        }
+        // Reset first: the cleanup below can wait for a slow sync, and a sign-in started meanwhile owns this state.
+        auth = AuthState()
+        viewModelScope.launch { Graph.sync.signOut() } // the session collector in init resets the account state
     }
 
     /** Text for a failed request; anything but an [ApiException] is a malformed response or a bug, not something to show raw. */

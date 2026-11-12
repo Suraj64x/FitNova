@@ -115,6 +115,22 @@ class WorkoutStore(private val db: Db) {
         load()
     }
 
+    /** Rows deleted on another device (see [deletedRemotely]). Synced ones only, so nothing waiting to upload is lost. */
+    suspend fun deleteSynced(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        withContext(Dispatchers.IO) {
+            val w = db.writableDatabase
+            w.beginTransaction()
+            try {
+                for (id in ids) w.delete("workouts", "id = ? AND synced = 1", arrayOf(id))
+                w.setTransactionSuccessful()
+            } finally {
+                w.endTransaction()
+            }
+        }
+        load()
+    }
+
     /** On sign-out: synced rows belong to the account (they live in the cloud); unsynced ones stay on the phone. */
     suspend fun clearSynced() {
         withContext(Dispatchers.IO) { db.writableDatabase.execSQL("DELETE FROM workouts WHERE synced = 1") }

@@ -37,9 +37,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FitNova">
 
+        <!-- singleTop: a notification tap reaches the open app through onNewIntent instead of stacking a second copy. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -50,10 +52,11 @@
 
         <!-- Alarm challenge. showWhenLocked/turnScreenOn are also declared here (API 27+) so SystemUI can open it
              from a lock-screen heads-up without asking for the PIN. Own task, not in Recents; always dark.
-             configChanges: on large screens the portrait lock is ignored, and rotating must not restart the camera. -->
+             configChanges: on large screens the portrait lock is ignored, and rotating must not restart the camera;
+             a dark-theme schedule ending, or a font or display size change, must not reset the reps either. -->
         <activity
             android:name=".alarm.RingActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|fontScale|density|locale|layoutDirection"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTask"

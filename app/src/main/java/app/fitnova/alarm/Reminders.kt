@@ -47,7 +47,9 @@ object Reminders {
         Graph.store.load() // the process may have started just for this
         val dayStart = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         if (Graph.store.all.value.any { it.startedAt >= dayStart }) return
-        val open = PendingIntent.getActivity(c, ID, Intent(c, MainActivity::class.java).putExtra("open", "train"), PendingIntent.FLAG_IMMUTABLE)
+        // CLEAR_TOP|SINGLE_TOP: an open app switches tabs in onNewIntent instead of stacking a second copy.
+        val tap = Intent(c, MainActivity::class.java).putExtra("open", "train").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val open = PendingIntent.getActivity(c, ID, tap, PendingIntent.FLAG_IMMUTABLE)
         nm.notify(
             ID,
             Notification.Builder(c, CH_REMIND)

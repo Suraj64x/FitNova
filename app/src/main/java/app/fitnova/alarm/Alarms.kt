@@ -126,8 +126,9 @@ object AlarmScheduler {
 
     private fun setClock(c: Context, at: Long, op: PendingIntent?): Boolean {
         op ?: return false
-        // Shown when someone taps the alarm in the status bar or clock.
-        val show = PendingIntent.getActivity(c, 1, Intent(c, MainActivity::class.java).putExtra("open", "sleep"), PendingIntent.FLAG_IMMUTABLE)
+        // Shown when someone taps the alarm in the status bar or clock. CLEAR_TOP|SINGLE_TOP: an open app gets onNewIntent.
+        val tap = Intent(c, MainActivity::class.java).putExtra("open", "sleep").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val show = PendingIntent.getActivity(c, 1, tap, PendingIntent.FLAG_IMMUTABLE)
         // setAlarmClock: exact, leaves Doze, may start the ring service from the background, and shows in the status bar.
         return runCatching { am(c).setAlarmClock(AlarmManager.AlarmClockInfo(at, show), op) }.isSuccess // revoked a moment ago
     }

@@ -28,12 +28,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -109,6 +111,8 @@ class RingActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Recreated after the challenge was done: ringing is null again, so carrying on would ring this alarm twice.
+        if (savedInstanceState?.getBoolean("done") == true) return finish()
         val ring = Ring.from(intent) ?: RingService.ringing.value ?: return finish()
         if (Build.VERSION.SDK_INT >= 27) {
             setShowWhenLocked(true)
@@ -151,9 +155,15 @@ class RingActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (morning != null && Ring.from(intent) != null) {
+            finishing = false // the new ring isn't done: the recreated screen must take it on, not close
             setIntent(intent)
             recreate()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("done", finishing)
     }
 
     // Volume keys must not turn the alarm down while the challenge is up.
@@ -164,14 +174,17 @@ class RingActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        RingService.screenVisible(this, true)
+        // Once done, a ring is a new one and "Good morning" isn't its screen: leave its loud alert alone.
+        if (!finishing) RingService.screenVisible(this, true)
     }
 
     override fun onPause() {
         super.onPause()
-        if (!finishing) RingService.screenVisible(this, false)
+        // Not when recreated: the new instance resumes at once, so the loud heads-up would only flash over it.
+        if (!finishing && !isChangingConfigurations) RingService.screenVisible(this, false)
     }
 
+    /** Start, then every rep or key: keeps the ring calm, which RingService ends after a minute without any. */
     private fun calm() {
         startService(Intent(this, RingService::class.java).setAction(RingService.CALM))
     }
@@ -210,15 +223,15 @@ private val H12 = DateTimeFormatter.ofPattern("h:mm")
 private val AM_PM = DateTimeFormatter.ofPattern("a")
 
 @Composable
-private fun RingScreen(ring: Ring, camera: Boolean, onStart: () -> Unit, onSnooze: (() -> Unit)?, onDone: (Workout?) -> Unit) {
+private fun RingScreen(ring: Ring, camera: Boolean, onProgress: () -> Unit, onSnooze: (() -> Unit)?, onDone: (Workout?) -> Unit) {
     var stage by rememberSaveable { mutableStateOf(Stage.INTRO) }
     var partial by remember { mutableStateOf<Workout?>(null) }
     BackHandler {} // the alarm stops only through its challenge
     Box(Modifier.fillMaxSize()) {
         when (stage) {
-            Stage.INTRO -> Intro(ring, camera, onStart = { onStart(); stage = if (camera) Stage.POSE else Stage.MATHS }, onSnooze)
-            Stage.POSE -> PoseChallenge(ring, onDone = onDone, onStuck = { partial = it; stage = Stage.MATHS })
-            Stage.MATHS -> MathsChallenge(onDone = { onDone(partial) })
+            Stage.INTRO -> Intro(ring, camera, onStart = { onProgress(); stage = if (camera) Stage.POSE else Stage.MATHS }, onSnooze)
+            Stage.POSE -> PoseChallenge(ring, onRep = onProgress, onDone = onDone, onStuck = { onProgress(); partial = it; stage = Stage.MATHS })
+            Stage.MATHS -> MathsChallenge(onKey = onProgress, onDone = { onDone(partial) })
         }
     }
 }
@@ -306,7 +319,7 @@ private fun Clock() {
 }
 
 @Composable
-private fun PoseChallenge(ring: Ring, onDone: (Workout) -> Unit, onStuck: (Workout?) -> Unit) {
+private fun PoseChallenge(ring: Ring, onRep: () -> Unit, onDone: (Workout) -> Unit, onStuck: (Workout?) -> Unit) {
     val coach = remember { Coach(ring.exercise) }
     val startedAt = remember { System.currentTimeMillis() }
     var frame by remember { mutableStateOf<Frame?>(null) }
@@ -319,6 +332,7 @@ private fun PoseChallenge(ring: Ring, onDone: (Workout) -> Unit, onStuck: (Worko
     )
     LaunchedEffect(reps) {
         if (reps >= ring.reps) return@LaunchedEffect onDone(workout())
+        if (reps > 0) onRep()
         stuck = false
         delay(STUCK_MS)
         stuck = true
@@ -402,9 +416,12 @@ private fun FullBrightness() {
 
 private val KEYS = listOf("123", "456", "789", " 0${SumChallenge.BACKSPACE}")
 
-/** Its own keypad: the soft keyboard can't be relied on over the lock screen. 76 dp keys for sleepy thumbs. */
+/** 76 dp circles for sleepy thumbs, smaller when a short (16:9) screen has less height to share. */
+private val KEY_SIZE = Modifier.sizeIn(maxWidth = 76.dp, maxHeight = 76.dp).aspectRatio(1f)
+
+/** Its own keypad: the soft keyboard can't be relied on over the lock screen. */
 @Composable
-private fun MathsChallenge(onDone: () -> Unit) {
+private fun MathsChallenge(onKey: () -> Unit, onDone: () -> Unit) {
     var state by remember { mutableStateOf(SumChallenge(Sum.random())) }
     LaunchedEffect(state.done) { if (state.done) onDone() }
     Column(
@@ -424,9 +441,10 @@ private fun MathsChallenge(onDone: () -> Unit) {
         Box(Modifier.height(28.dp), contentAlignment = Alignment.Center) { if (state.wrong) Tag("Not quite, new sum", Nova.colors.bad) }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             for (row in KEYS) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                // The rows share the height left below the sum, so all four always fit (fixed 76 dp keys didn't on 16:9).
+                Row(Modifier.weight(1f, fill = false), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     for (k in row) {
-                        if (k == ' ') Spacer(Modifier.size(76.dp)) else Key(k) { state = state.press(k) { Sum.random() } }
+                        if (k == ' ') Spacer(KEY_SIZE) else Key(k) { state = state.press(k) { Sum.random() }; onKey() }
                     }
                 }
             }
@@ -451,8 +469,7 @@ private fun Steps(solved: Int) {
 private fun Key(k: Char, onClick: () -> Unit) {
     val back = k == SumChallenge.BACKSPACE
     Box(
-        Modifier
-            .size(76.dp)
+        KEY_SIZE
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .clickable(role = Role.Button, onClick = onClick)

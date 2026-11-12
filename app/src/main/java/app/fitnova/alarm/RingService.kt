@@ -46,6 +46,12 @@ class RingService : Service() {
     private var focus: AudioFocusRequest? = null
     private var wake: PowerManager.WakeLock? = null
 
+    /** No rep or key for [CALM_MS] (Home, power, back to sleep): the challenge was left, so ring out loud again. */
+    private val loud = Runnable {
+        player?.setVolume(1f, 1f)
+        vibrate()
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -67,6 +73,7 @@ class RingService : Service() {
 
     private fun begin(r: Ring) {
         _ringing.value = r // before the notification can open the ring screen
+        quiet = false // a new ring always alerts, and its full-screen intent opens the screen
         ensureChannels(this)
         try {
             foreground(r) // first: startForegroundService gives only a few seconds
@@ -85,7 +92,7 @@ class RingService : Service() {
     }
 
     private fun foreground(r: Ring) {
-        val n = notification(this, r)
+        val n = notification(this, r, quiet)
         if (Build.VERSION.SDK_INT >= 34) startForeground(RING_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
         else startForeground(RING_ID, n)
     }
@@ -122,12 +129,17 @@ class RingService : Service() {
         }
     }
 
-    /** The challenge has started: stop shaking the propped-up phone and turn the sound down so the user can focus. */
+    /**
+     * The challenge has started or moved on (Start, a rep, a key): stop shaking the propped-up phone and turn the sound
+     * down so the user can focus. Each CALM lasts [CALM_MS], so tapping Start can't buy a quiet ring.
+     */
     private fun calm() {
         vibrator.cancel()
         shaper?.close()
         shaper = null
         player?.setVolume(0.35f, 0.35f)
+        handler.removeCallbacks(loud)
+        handler.postDelayed(loud, CALM_MS) // onDestroy drops it when the ring ends
     }
 
     /** 15 minutes with nobody stopping it (battery, neighbours, nobody home): stop, and say so. Not counted as done. */
@@ -161,7 +173,13 @@ class RingService : Service() {
         private const val RING_ID = 42
         private const val RING_MAX_MS = 15 * 60_000L
 
+        /** Longer than the ring screen's 45 s wait before it offers the sums, so that way out comes first. */
+        private const val CALM_MS = 60_000L
+
         private val _ringing = MutableStateFlow<Ring?>(null)
+
+        /** The ring screen is in front: re-posts (swiped away, a backup alarm firing) must stay quiet too. Main thread. */
+        private var quiet = false
 
         /** The alarm ringing right now in this process, or null. */
         val ringing: StateFlow<Ring?> = _ringing.asStateFlow()
@@ -208,6 +226,7 @@ class RingService : Service() {
          */
         fun screenVisible(c: Context, visible: Boolean) {
             val r = _ringing.value ?: return
+            quiet = visible
             ensureChannels(c)
             runCatching { c.getSystemService(NotificationManager::class.java).notify(RING_ID, notification(c, r, quiet = visible)) }
         }
